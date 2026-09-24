@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Thu Nhỏ Bán Kính Mặt Trăng</title>
+    <title>Mặt Trăng Thu Nhỏ Bán Kính Mượt Mà</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
@@ -13,101 +13,107 @@
             display: flex;
             justify-content: center;
             align-items: center;
-            flex-direction: column;
-            font-family: sans-serif;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            user-select: none;
         }
 
-        /* KHỐI TRÒN MẶT TRĂNG BAN ĐẦU */
-        #moon-circle {
-            /* Khởi tạo đường kính 450px (bán kính 225px) */
-            width: 450px;
-            height: 450px;
+        /* BẦU TRỜI SAO NỀN CỐ ĐỊNH */
+        .sky-bg {
+            position: fixed;
+            top: 0; left: 0;
+            width: 100vw; height: 100vh;
+            background: radial-gradient(circle at center, #1b2735 0%, #02050e 100%);
+            z-index: 1;
+        }
+
+        /* KHỐI TRÒN MẶT TRĂNG DUY NHẤT */
+        #moon {
+            position: absolute;
+            z-index: 10;
+            width: 360px;
+            height: 360px;
             border-radius: 50%;
-            background: radial-gradient(circle at 35% 35%, #fff3a0 0%, #fbc531 60%, #e1b12c 100%);
-            box-shadow: 0 0 50px rgba(251, 197, 49, 0.6);
-            overflow: hidden;
-            position: relative;
-
-            /* Hiệu ứng giảm kích thước (width/height) mượt mà trong 1 giây */
-            transition: width 1s linear, height 1s linear, opacity 1s linear;
-        }
-
-        /* CÁC PHẦN TỬ BÊN TRONG KHỐI TRÒN (TỰ ĐỘNG THU THEO BÁN KÍNH MẶT TRĂNG) */
-        .ground {
-            position: absolute;
-            bottom: 0; left: 0;
-            width: 100%; height: 25%;
-            background: #2c3e50;
-        }
-
-        .hang-nga {
-            position: absolute;
-            top: 20%; right: 20%;
-            width: 15%; height: 20%;
-            background: #fd79a8;
-            border-radius: 20px;
-            display: flex; justify-content: center; align-items: center;
-            color: #fff; font-size: 0.8rem; font-weight: bold;
-        }
-
-        .tree {
-            position: absolute;
-            bottom: 15%; right: 10%;
-            width: 18%; height: 35%;
-            background: #2d1500;
-            border-radius: 10px;
-        }
-
-        /* NÚT ĐIỀU KHIỂN */
-        #btn {
-            margin-top: 40px;
-            padding: 12px 28px;
-            font-size: 1rem;
-            font-weight: bold;
-            color: #02050e;
-            background: #fff3a0;
-            border: none;
-            border-radius: 20px;
             cursor: pointer;
-            box-shadow: 0 0 15px rgba(255, 243, 160, 0.6);
+            
+            /* Ánh sáng ban đầu (sáng bình thường) */
+            background: radial-gradient(circle at 35% 35%, #ffffff 0%, #fff3a0 50%, #fbc531 100%);
+            box-shadow: 0 0 40px rgba(251, 197, 49, 0.4);
+            filter: brightness(1);
+
+            /* Hiệu ứng tăng độ sáng từ từ trong 3 giây khi rê chuột */
+            transition: filter 3s ease, box-shadow 3s ease;
+        }
+
+        /* RÊ CHUỘT LẠI GẦN / NỔI LÊN MẶT TRĂNG: SÁNG TỪ TỪ LÊN TRONG 3S */
+        #moon:hover {
+            filter: brightness(1.5);
+            box-shadow: 0 0 100px #fff, 0 0 140px #fbc531;
+        }
+
+        /* KHI ĐÃ CLICK: GIỮ NGUYÊN ĐỘ SÁNG RỰC RỠ VÀ KHÔNG NHẬN HOVER NỮA */
+        #moon.is-clicked {
+            filter: brightness(1.5) !important;
+            box-shadow: 0 0 100px #fff, 0 0 140px #fbc531 !important;
+            cursor: default;
+        }
+
+        /* HƯỚNG DẪN BẤM */
+        #hint {
+            position: fixed;
+            bottom: 50px;
+            color: #ffeaa7;
+            font-size: 1.1rem;
+            z-index: 20;
+            pointer-events: none;
+            opacity: 0.8;
+            transition: opacity 0.5s ease;
         }
     </style>
 </head>
 <body>
 
-    <!-- KHỐI TRÒN MẶT TRĂNG -->
-    <div id="moon-circle">
-        <div class="hang-nga">Hằng Nga</div>
-        <div class="tree"></div>
-        <div class="ground"></div>
-    </div>
+    <div class="sky-bg"></div>
 
-    <button id="btn" onclick="startShrinking()">Bắt đầu thu nhỏ bán kính (10px / giây)</button>
+    <!-- MẶT TRĂNG DUY NHẤT -->
+    <div id="moon" onclick="onMoonClick()"></div>
+
+    <div id="hint">Di chuột lại gần Mặt Trăng để phát sáng, bấm vào để thu nhỏ</div>
 
     <script>
-        let size = 450; // Kích thước ban đầu (đường kính = 450px, bán kính = 225px)
-        let timer = null;
+        const moon = document.getElementById('moon');
+        const hint = document.getElementById('hint');
+        
+        let currentSize = 360; // Đường kính ban đầu 360px
+        let isShrinking = false;
+        let shrinkSpeed = 0.8; // Giảm ~0.8px mỗi khung hình (rất nhỏ và mượt)
 
-        function startShrinking() {
-            document.getElementById('btn').style.display = 'none';
+        function onMoonClick() {
+            if (isShrinking) return;
+            isShrinking = true;
 
-            // Cứ mỗi 1 giây (1000ms), giảm đường kính đi 20px (tương đương bán kính giảm 10px)
-            timer = setInterval(() => {
-                const moon = document.getElementById('moon-circle');
-                
-                size -= 20; // Bán kính giảm 10px mỗi giây
+            // Chốt cố định độ sáng rực rỡ
+            moon.classList.add('is-clicked');
+            hint.style.opacity = '0';
 
-                if (size <= 50) {
-                    // Khi bán kính còn quá nhỏ, làm mờ rồi dừng lại hẳn
-                    moon.style.width = '0px';
-                    moon.style.height = '0px';
-                    moon.style.opacity = '0';
-                    clearInterval(timer);
-                } else {
-                    moon.style.width = size + 'px';
-                    moon.style.height = size + 'px';
-                }
-            }, 1000);
+            // Bắt đầu vòng lặp giảm px tốc độ cao (60fps) giúp mượt tối đa
+            requestAnimationFrame(shrinkMoon);
+        }
+
+        function shrinkMoon() {
+            if (currentSize > 0) {
+                currentSize -= shrinkSpeed; // Giảm kích thước từng chút một
+
+                if (currentSize < 0) currentSize = 0;
+
+                // Cập nhật kích thước mặt trăng, giữ nguyên vị trí căn giữa
+                moon.style.width = currentSize + 'px';
+                moon.style.height = currentSize + 'px';
+
+                // Tiếp tục gọi khung hình tiếp theo
+                requestAnimationFrame(shrinkMoon);
+            } else {
+                moon.style.display = 'none'; // Biến mất hoàn toàn khi bán kính về 0
+            }
         }
     </script>
 </body>
