@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Kịch Bản Đêm Trăng Trung Thu</title>
+    <title>Đêm Trăng Trung Thu Mượt Mà</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
@@ -33,8 +33,8 @@
             left: 50%;
             transform: translate(-50%, -50%);
             z-index: 10;
-            width: 380px;
-            height: 380px;
+            width: 360px;
+            height: 360px;
             border-radius: 50%;
             cursor: pointer;
             
@@ -43,34 +43,44 @@
             box-shadow: 0 0 40px rgba(251, 197, 49, 0.4);
             filter: brightness(1);
 
-            /* Transition hỗ trợ di chuyển vị trí và đổi độ sáng mượt mà */
-            transition: filter 3s ease, box-shadow 3s ease, top 3s cubic-bezier(0.25, 1, 0.5, 1);
+            /* Dùng CSS Transition giúp chuyển động thu nhỏ và di chuyển cực kỳ mượt */
+            transition: filter 3s ease, 
+                        box-shadow 3s ease, 
+                        width 3.5s cubic-bezier(0.4, 0, 0.2, 1), 
+                        height 3.5s cubic-bezier(0.4, 0, 0.2, 1), 
+                        top 3s cubic-bezier(0.25, 1, 0.5, 1);
         }
 
-        /* RÊ CHUỘT LẠI GẦN: SÁNG TỪ TỪ LÊN TRONG 3S */
+        /* RÊ CHUỘT LẠI GẦN: SÁNG TỪ TỪ LÊN ĐÚNG 3S */
         #moon:hover {
             filter: brightness(1.5);
             box-shadow: 0 0 100px #fff, 0 0 140px #fbc531;
         }
 
-        /* GIỮ NGUYÊN ĐỘ SÁNG KHI ĐÃ CLICK */
+        /* GIỮ NGUYÊN ĐỘ SÁNG RỰC RỠ KHI ĐÃ CLICK */
         #moon.is-clicked {
             filter: brightness(1.5) !important;
             box-shadow: 0 0 100px #fff, 0 0 140px #fbc531 !important;
             cursor: default;
         }
 
-        /* TRẠNG THÁI BAY LÊN 1/3 TRÊN MÀN HÌNH */
-        #moon.move-up {
-            top: 25% !important; /* Vị trí 1/3 phía trên */
+        /* KHI THU NHỎ (NHỎ HƠN 1-2PX SO VỚI TRƯỚC) */
+        #moon.shrink {
+            width: 160px !important;
+            height: 160px !important;
         }
 
-        /* CẢNH 1/3 DƯỚI MÀN HÌNH: ĐẤT VÀ 2 BÓNG NGƯỜI TỰA VÀO NHAU */
+        /* KHI BAY LÊN 1/3 TRÊN MÀN HÌNH */
+        #moon.move-up {
+            top: 25% !important;
+        }
+
+        /* CẢNH 1/3 DƯỚI MÀN HÌNH: 2 BÓNG NGƯỜI */
         #bottom-scene {
             position: fixed;
             bottom: 0; left: 0;
             width: 100vw;
-            height: 35vh; /* 1/3 dưới màn hình */
+            height: 35vh;
             z-index: 5;
             opacity: 0;
             transition: opacity 2.5s ease;
@@ -89,14 +99,15 @@
             position: absolute;
             bottom: 0; left: 0;
             width: 100%; height: 100%;
-            background: linear-gradient(to top, #02050e 40%, rgba(2, 5, 14, 0.8) 80%, transparent 100%);
+            background: linear-gradient(to top, #080d1a 30%, rgba(8, 13, 26, 0.7) 70%, transparent 100%);
         }
 
-        /* HÌNH BÓNG 2 NGƯỜI TỰA VÀO NHAU */
+        /* HÌNH BÓNG 2 NGƯỜI NỔI BẬT NỀN ĐÊM */
         .couple-silhouette {
             position: relative;
             z-index: 6;
-            margin-bottom: 20px;
+            margin-bottom: 25px;
+            filter: drop-shadow(0 0 10px rgba(255, 243, 160, 0.3));
         }
 
         /* HƯỚNG DẪN BẤM */
@@ -119,68 +130,54 @@
     <!-- MẶT TRĂNG -->
     <div id="moon" onclick="startSequence()"></div>
 
-    <!-- CẢNH DƯỚI MÀN HÌNH (BÓNG 2 NGƯỜI) -->
+    <!-- CẢNH DƯỚI MÀN HÌNH (HÌNH BÓNG 2 NGƯỜI RÕ RÀNG) -->
     <div id="bottom-scene">
         <div class="ground-base"></div>
-        <svg class="couple-silhouette" width="160" height="120" viewBox="0 0 160 120">
-            <!-- Người bên trái -->
-            <circle cx="65" cy="35" r="14" fill="#02050e"/>
-            <path d="M 40,120 C 40,70 55,55 75,55 C 80,55 85,70 85,120 Z" fill="#02050e"/>
+        <svg class="couple-silhouette" width="200" height="140" viewBox="0 0 200 140">
+            <!-- Mảnh đất đồi nhỏ -->
+            <path d="M 0,140 Q 100,100 200,140 Z" fill="#0d1424"/>
             
-            <!-- Người bên phải nghiêng đầu tựa vào -->
-            <circle cx="88" cy="40" r="12" fill="#02050e"/>
-            <path d="M 75,120 C 75,75 85,65 105,67 C 115,77 110,95 115,120 Z" fill="#02050e"/>
+            <!-- Người bên trái (nam/nữ) -->
+            <circle cx="85" cy="45" r="15" fill="#152035"/>
+            <path d="M 60,140 C 60,85 75,70 95,70 C 100,70 105,85 105,140 Z" fill="#152035"/>
+            
+            <!-- Người bên phải nghiêng đầu tựa vào vai -->
+            <circle cx="112" cy="52" r="13" fill="#152035"/>
+            <path d="M 95,140 C 95,90 105,80 128,82 C 138,92 132,110 138,140 Z" fill="#152035"/>
         </svg>
     </div>
 
-    <div id="hint">Rê chuột để làm sáng, click vào Mặt Trăng để bắt đầu</div>
+    <div id="hint">Di chuột để làm sáng 3s, click vào Mặt Trăng để thu nhỏ</div>
 
     <script>
         const moon = document.getElementById('moon');
         const hint = document.getElementById('hint');
         const bottomScene = document.getElementById('bottom-scene');
 
-        let currentSize = 380;       // Đường kính ban đầu
-        const targetSize = 180;      // Dừng lại ở kích thước vừa phải (180px)
         let isStarted = false;
 
         function startSequence() {
             if (isStarted) return;
             isStarted = true;
 
-            // 1. Giữ nguyên độ sáng rực rỡ và ẩn dòng hướng dẫn
+            // 1. Chốt độ sáng rực rỡ và ẩn chữ hướng dẫn
             moon.classList.add('is-clicked');
             hint.style.opacity = '0';
 
-            // 2. Đợi đúng 3 giây sau khi click mới bắt đầu thu nhỏ
+            // 2. Đợi đúng 3s phát sáng rực rỡ rồi thu nhỏ cực mượt
             setTimeout(() => {
-                requestAnimationFrame(shrinkMoon);
-            }, 3000);
-        }
+                moon.classList.add('shrink');
 
-        // Lập trình thu nhỏ mượt mà từng pixel
-        function shrinkMoon() {
-            if (currentSize > targetSize) {
-                currentSize -= 0.8; // Tốc độ giảm cực mịn
-
-                moon.style.width = currentSize + 'px';
-                moon.style.height = currentSize + 'px';
-
-                requestAnimationFrame(shrinkMoon);
-            } else {
-                // Đảm bảo dừng chuẩn ở kích thước vừa phải
-                moon.style.width = targetSize + 'px';
-                moon.style.height = targetSize + 'px';
-
-                // 3. Sau khi thu nhỏ xong, dừng lại đúng 2 giây
+                // 3. Sau khi thu nhỏ xong (3.5s), dừng nghỉ đúng 2s
                 setTimeout(() => {
-                    // 4. Từ từ bay lên 1/3 phía trên màn hình
+                    // 4. Bay lên 1/3 phía trên
                     moon.classList.add('move-up');
 
-                    // 5. Đồng thời để lộ ra 2 bóng người ngồi tựa vào nhau phía dưới
+                    // 5. Hiện hình bóng 2 người tựa vào nhau phía dưới
                     bottomScene.classList.add('show');
                 }, 2000);
-            }
+
+            }, 3000);
         }
     </script>
 </body>
