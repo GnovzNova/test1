@@ -3,139 +3,111 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Demo Zoom Out Mượt Mà</title>
+    <title>Thu Nhỏ Bán Kính Mặt Trăng</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
             width: 100vw; height: 100vh;
             overflow: hidden;
             background: #02050e;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
             font-family: sans-serif;
         }
 
-        /* BẦU TRỜI SAO NỀN CỐ ĐỊNH */
-        .sky-bg {
-            position: fixed;
-            top: 0; left: 0;
-            width: 100vw; height: 100vh;
-            background: radial-gradient(circle at center, #1b2735 0%, #02050e 100%);
-            z-index: 1;
-        }
-
-        /* MẶT TRĂNG OUTRO (NẰM PHÍA SAU) */
-        #outro-moon {
-            position: fixed;
-            top: 50%; left: 50%;
-            transform: translate(-50%, -50%) scale(0.6);
-            width: 300px; height: 300px;
-            background: radial-gradient(circle at 35% 35%, #ffffff 0%, #fff3a0 50%, #fbc531 100%);
+        /* KHỐI TRÒN MẶT TRĂNG BAN ĐẦU */
+        #moon-circle {
+            /* Khởi tạo đường kính 450px (bán kính 225px) */
+            width: 450px;
+            height: 450px;
             border-radius: 50%;
-            box-shadow: 0 0 80px #fbc531;
-            z-index: 2;
-            opacity: 0;
-            transition: opacity 2s ease, transform 3s ease;
-        }
-        #outro-moon.show {
-            opacity: 1;
-            transform: translate(-50%, -50%) scale(1);
+            background: radial-gradient(circle at 35% 35%, #fff3a0 0%, #fbc531 60%, #e1b12c 100%);
+            box-shadow: 0 0 50px rgba(251, 197, 49, 0.6);
+            overflow: hidden;
+            position: relative;
+
+            /* Hiệu ứng giảm kích thước (width/height) mượt mà trong 1 giây */
+            transition: width 1s linear, height 1s linear, opacity 1s linear;
         }
 
-        /* TOÀN BỘ CẢNH MẶT TRĂNG (SẼ ZOOM OUT) */
-        #moon-scene {
-            position: fixed;
-            top: 0; left: 0;
-            width: 100vw; height: 100vh;
-            z-index: 10;
-            /* Thiết lập tâm zoom đúng ở giữa màn hình */
-            transform-origin: center center;
-            /* Hiệu ứng chuyển động kéo xa và mờ đi mượt mà trong 3.5 giây */
-            transition: transform 3.5s cubic-bezier(0.25, 1, 0.5, 1), opacity 3.5s ease;
-        }
-
-        /* LỚP PHỦ ZOOM OUT: BỊ LÔI RA XA VÀ MỜ DẦN */
-        #moon-scene.zoom-out {
-            transform: scale(0.1);
-            opacity: 0;
-            pointer-events: none;
-        }
-
-        /* CÁC PHẦN TỬ TRONG CẢNH */
+        /* CÁC PHẦN TỬ BÊN TRONG KHỐI TRÒN (TỰ ĐỘNG THU THEO BÁN KÍNH MẶT TRĂNG) */
         .ground {
             position: absolute;
             bottom: 0; left: 0;
-            width: 100vw; height: 160px;
+            width: 100%; height: 25%;
             background: #2c3e50;
-            border-radius: 50% 50% 0 0 / 20px 20px 0 0;
         }
 
         .hang-nga {
             position: absolute;
             top: 20%; right: 20%;
-            width: 80px; height: 120px;
+            width: 15%; height: 20%;
             background: #fd79a8;
-            border-radius: 40px;
+            border-radius: 20px;
             display: flex; justify-content: center; align-items: center;
-            color: #fff; font-weight: bold;
-            box-shadow: 0 0 20px #fd79a8;
+            color: #fff; font-size: 0.8rem; font-weight: bold;
         }
 
-        .banyan-tree {
+        .tree {
             position: absolute;
-            bottom: 80px; right: 5%;
-            width: 120px; height: 200px;
+            bottom: 15%; right: 10%;
+            width: 18%; height: 35%;
             background: #2d1500;
-            border-radius: 20px 20px 0 0;
+            border-radius: 10px;
         }
 
-        /* NÚT THỬ NGHIỆM */
-        #test-btn {
-            position: fixed;
-            bottom: 30px; left: 50%;
-            transform: translateX(-50%);
-            z-index: 100;
-            padding: 14px 28px;
-            font-size: 1.1rem;
+        /* NÚT ĐIỀU KHIỂN */
+        #btn {
+            margin-top: 40px;
+            padding: 12px 28px;
+            font-size: 1rem;
             font-weight: bold;
             color: #02050e;
             background: #fff3a0;
             border: none;
-            border-radius: 25px;
+            border-radius: 20px;
             cursor: pointer;
-            box-shadow: 0 0 20px rgba(255, 243, 160, 0.8);
+            box-shadow: 0 0 15px rgba(255, 243, 160, 0.6);
         }
     </style>
 </head>
 <body>
 
-    <div class="sky-bg"></div>
-
-    <!-- CẢNH MẶT TRĂNG BAN ĐẦU -->
-    <div id="moon-scene">
+    <!-- KHỐI TRÒN MẶT TRĂNG -->
+    <div id="moon-circle">
         <div class="hang-nga">Hằng Nga</div>
-        <div class="banyan-tree"></div>
+        <div class="tree"></div>
         <div class="ground"></div>
     </div>
 
-    <!-- MẶT TRĂNG LÚC OUTRO -->
-    <div id="outro-moon"></div>
-
-    <button id="test-btn" onclick="runZoomOut()">Thử Zoom Out (Kéo Xa)</button>
+    <button id="btn" onclick="startShrinking()">Bắt đầu thu nhỏ bán kính (10px / giây)</button>
 
     <script>
-        function runZoomOut() {
-            const moonScene = document.getElementById('moon-scene');
-            const outroMoon = document.getElementById('outro-moon');
-            const btn = document.getElementById('test-btn');
+        let size = 450; // Kích thước ban đầu (đường kính = 450px, bán kính = 225px)
+        let timer = null;
 
-            btn.style.display = 'none';
+        function startShrinking() {
+            document.getElementById('btn').style.display = 'none';
 
-            // Kích hoạt thu nhỏ (scale) và mờ dần (opacity)
-            moonScene.classList.add('zoom-out');
+            // Cứ mỗi 1 giây (1000ms), giảm đường kính đi 20px (tương đương bán kính giảm 10px)
+            timer = setInterval(() => {
+                const moon = document.getElementById('moon-circle');
+                
+                size -= 20; // Bán kính giảm 10px mỗi giây
 
-            // Sau khi cảnh cũ thu nhỏ biến mất hẳn thì hiện vầng trăng Rằm
-            setTimeout(() => {
-                outroMoon.classList.add('show');
-            }, 1800);
+                if (size <= 50) {
+                    // Khi bán kính còn quá nhỏ, làm mờ rồi dừng lại hẳn
+                    moon.style.width = '0px';
+                    moon.style.height = '0px';
+                    moon.style.opacity = '0';
+                    clearInterval(timer);
+                } else {
+                    moon.style.width = size + 'px';
+                    moon.style.height = size + 'px';
+                }
+            }, 1000);
         }
     </script>
 </body>
