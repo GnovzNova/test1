@@ -17,7 +17,6 @@
             user-select: none;
         }
 
-        /* BẦU TRỜI SAO NỀN CỐ ĐỊNH */
         .sky-bg {
             position: fixed;
             top: 0; left: 0;
@@ -26,22 +25,20 @@
             z-index: 1;
         }
 
-        /* CANVAS VẼ PHÁO HOA */
         #fireworks-canvas {
             position: fixed;
             top: 0; left: 0;
             width: 100vw; height: 100vh;
-            z-index: 8;
+            z-index: 5;
             pointer-events: none;
         }
 
-        /* KHỐI TRÒN MẶT TRĂNG */
         #moon {
             position: absolute;
             top: 50%;
             left: 50%;
             transform: translate(-50%, -50%) scale(1);
-            z-index: 10;
+            z-index: 20;
             width: 360px;
             height: 360px;
             border-radius: 50%;
@@ -74,13 +71,12 @@
             top: 22% !important;
         }
 
-        /* CẢNH BÓNG 2 NGƯỜI */
         #bottom-scene {
             position: fixed;
             bottom: 0; left: 0;
             width: 100vw;
             height: 38vh;
-            z-index: 5;
+            z-index: 15;
             opacity: 0;
             transition: opacity 2.5s ease;
             pointer-events: none;
@@ -95,12 +91,12 @@
             position: absolute;
             bottom: 0; left: 0;
             width: 100%; height: 100%;
-            background: linear-gradient(to top, #060a14 30%, rgba(6, 10, 20, 0.8) 75%, transparent 100%);
+            background: linear-gradient(to top, #02050e 40%, rgba(2, 5, 14, 0.8) 80%, transparent 100%);
         }
 
         .couple-silhouette {
             position: relative;
-            z-index: 6;
+            z-index: 16;
             margin-bottom: -10px;
         }
 
@@ -109,7 +105,7 @@
             bottom: 40px;
             color: #ffeaa7;
             font-size: 1.1rem;
-            z-index: 20;
+            z-index: 30;
             pointer-events: none;
             opacity: 0.8;
             transition: opacity 0.5s ease;
@@ -126,11 +122,11 @@
     <div id="bottom-scene">
         <div class="ground-base"></div>
         <svg class="couple-silhouette" width="340" height="220" viewBox="0 0 340 220">
-            <path d="M 0,220 Q 170,170 340,220 Z" fill="#090f1d"/>
-            <circle cx="130" cy="85" r="28" fill="#090f1d"/>
-            <path d="M 70,220 C 70,140 100,120 145,120 C 175,120 185,150 185,220 Z" fill="#090f1d"/>
-            <circle cx="182" cy="98" r="24" fill="#090f1d"/>
-            <path d="M 150,220 C 150,150 170,135 210,138 C 240,148 245,180 255,220 Z" fill="#090f1d"/>
+            <path d="M 0,220 Q 170,170 340,220 Z" fill="#1e293b"/>
+            <circle cx="130" cy="85" r="28" fill="#1e293b"/>
+            <path d="M 70,220 C 70,140 100,120 145,120 C 175,120 185,150 185,220 Z" fill="#1e293b"/>
+            <circle cx="182" cy="98" r="24" fill="#1e293b"/>
+            <path d="M 150,220 C 150,150 170,135 210,138 C 240,148 245,180 255,220 Z" fill="#1e293b"/>
         </svg>
     </div>
 
@@ -152,7 +148,6 @@
 
         let isStarted = false;
 
-        // KỊCH BẢN TỔNG THỂ
         function startSequence() {
             if (isStarted) return;
             isStarted = true;
@@ -160,17 +155,13 @@
             moon.classList.add('is-clicked');
             hint.style.opacity = '0';
 
-            // 1. Giữ độ sáng 3s -> Bắt đầu thu nhỏ đúng 5s
             setTimeout(() => {
                 moon.classList.add('shrink');
 
-                // 2. Thu nhỏ xong 5s -> Tạm dừng 2s
                 setTimeout(() => {
-                    // 3. Trăng bay lên & hiện bóng 2 người (tốn ~3s transition)
                     moon.classList.add('move-up');
                     bottomScene.classList.add('show');
 
-                    // 4. Sau khi trăng yên vị (đợi 3s) + nghỉ đúng 1s = 4000ms
                     setTimeout(() => {
                         startFireworksPhase1();
                     }, 4000);
@@ -180,16 +171,14 @@
             }, 3000);
         }
 
-        // HE THONG PHAO HOA CANVAS
         let particles = [];
         let rockets = [];
 
         function animate() {
             requestAnimationFrame(animate);
-            ctx.fillStyle = 'rgba(2, 5, 14, 0.2)'; // Tạo vệt mờ đuôi pháo
+            ctx.fillStyle = 'rgba(2, 5, 14, 0.2)';
             ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-            // Update & Draw Rockets
             for (let i = rockets.length - 1; i >= 0; i--) {
                 rockets[i].update();
                 rockets[i].draw();
@@ -198,7 +187,6 @@
                 }
             }
 
-            // Update & Draw Particles
             for (let i = particles.length - 1; i >= 0; i--) {
                 particles[i].update();
                 particles[i].draw();
@@ -215,7 +203,7 @@
                 this.y = startY;
                 this.targetX = targetX;
                 this.targetY = targetY;
-                this.speed = 12;
+                this.speed = 13;
                 this.angle = Math.atan2(targetY - startY, targetX - startX);
                 this.vx = Math.cos(this.angle) * this.speed;
                 this.vy = Math.sin(this.angle) * this.speed;
@@ -227,11 +215,10 @@
                 this.x += this.vx;
                 this.y += this.vy;
 
-                // Khi chạm đích thì nổ
                 if (Math.hypot(this.targetX - this.x, this.targetY - this.y) < 15) {
                     this.exploded = true;
                     if (this.isTextRocket) {
-                        explodeText();
+                        explodeTextDirect(); // Nổ trực tiếp ra chữ luôn!
                     } else {
                         explodeNormal(this.x, this.y);
                     }
@@ -251,7 +238,7 @@
         }
 
         class Particle {
-            constructor(x, y, color, vx, vy, friction = 0.95, gravity = 0.15) {
+            constructor(x, y, color, vx, vy, friction = 0.95, gravity = 0.08) {
                 this.x = x;
                 this.y = y;
                 this.color = color;
@@ -268,7 +255,7 @@
                 this.vy += this.gravity;
                 this.x += this.vx;
                 this.y += this.vy;
-                this.alpha -= 0.012;
+                this.alpha -= 0.008; // Bay mờ chậm hơn cho chữ hiện lâu
             }
 
             draw() {
@@ -277,7 +264,7 @@
                 ctx.beginPath();
                 ctx.arc(this.x, this.y, 2.5, 0, Math.PI * 2);
                 ctx.fillStyle = this.color;
-                ctx.shadowBlur = 6;
+                ctx.shadowBlur = 8;
                 ctx.shadowColor = this.color;
                 ctx.fill();
                 ctx.restore();
@@ -295,18 +282,16 @@
             }
         }
 
-        // PHASE 1: Vòng lặp 3-6 quả, lặp 10 lần
         let phase1Count = 0;
         function startFireworksPhase1() {
             if (phase1Count >= 10) {
-                // Xong phase 1 -> Ngưng 1s rồi sang Phase 2
                 setTimeout(() => {
                     startFireworksPhase2();
                 }, 1000);
                 return;
             }
 
-            const waveRockets = 3 + Math.floor(Math.random() * 4); // 3 đến 6 quả
+            const waveRockets = 3 + Math.floor(Math.random() * 4);
             for (let i = 0; i < waveRockets; i++) {
                 setTimeout(() => {
                     const startX = canvas.width * (0.15 + Math.random() * 0.7);
@@ -317,65 +302,66 @@
             }
 
             phase1Count++;
-            setTimeout(startFireworksPhase1, 1500); // Khoảng cách giữa các đợt
+            setTimeout(startFireworksPhase1, 1500);
         }
 
-        // PHASE 2: Bắn 20 quả cùng lúc -> nổ chữ I LOVE YOU
+        // BẮN 10 QUẢ ĐỒNG LOẠT NỔ BÙNG THÀNH CHỮ "I LOVE YOU"
+        let textExploded = false;
         function startFireworksPhase2() {
-            // Bắn 20 quả đồng loạt
-            for (let i = 0; i < 20; i++) {
-                const startX = canvas.width * (0.05 + (i / 20) * 0.9);
+            textExploded = false;
+            const rocketCount = 10;
+            for (let i = 0; i < rocketCount; i++) {
+                const startX = canvas.width * (0.1 + (i / (rocketCount - 1)) * 0.8);
                 const targetX = startX;
-                const targetY = canvas.height * (0.2 + Math.random() * 0.25);
-                
-                // Quả ở giữa (thứ 10) sẽ là quả kích hoạt nổ ra chữ
-                const isCenter = (i === 10);
-                rockets.push(new Rocket(startX, canvas.height, targetX, targetY, isCenter));
+                const targetY = canvas.height * 0.45;
+                // Quả đầu tiên bay tới đích sẽ kích hoạt hiệu ứng nổ tạo chữ ngay lập tức
+                const isTrigger = (i === 0);
+                rockets.push(new Rocket(startX, canvas.height, targetX, targetY, isTrigger));
             }
         }
 
-        // NỔ TẠO CHỮ "I LOVE YOU"
-        function explodeText() {
-            // Sau 1s quả tên lửa chạm đích thì nổ bung chữ
-            setTimeout(() => {
-                const tempCanvas = document.createElement('canvas');
-                const tempCtx = tempCanvas.getContext('2d');
-                tempCanvas.width = 800;
-                tempCanvas.height = 200;
+        // NỔ PHÁT RA CHỮ LẬP TỨC
+        function explodeTextDirect() {
+            if (textExploded) return;
+            textExploded = true;
 
-                tempCtx.font = 'bold 90px "Segoe UI", Arial, sans-serif';
-                tempCtx.fillStyle = '#ffffff';
-                tempCtx.textAlign = 'center';
-                tempCtx.textBaseline = 'middle';
-                tempCtx.fillText('I LOVE YOU', 400, 100);
+            const tempCanvas = document.createElement('canvas');
+            const tempCtx = tempCanvas.getContext('2d');
+            tempCanvas.width = 900;
+            tempCanvas.height = 200;
 
-                const imgData = tempCtx.getImageData(0, 0, 800, 200);
-                const centerX = canvas.width / 2;
-                const centerY = canvas.height * 0.45;
+            tempCtx.font = 'bold 95px "Segoe UI", Arial, sans-serif';
+            tempCtx.fillStyle = '#ffffff';
+            tempCtx.textAlign = 'center';
+            tempCtx.textBaseline = 'middle';
+            tempCtx.fillText('I LOVE YOU', 450, 100);
 
-                for (let y = 0; y < 200; y += 4) {
-                    for (let x = 0; x < 800; x += 4) {
-                        const index = (y * 800 + x) * 4;
-                        if (imgData.data[index + 3] > 128) {
-                            const px = centerX + (x - 400);
-                            const py = centerY + (y - 100);
-                            
-                            // Tạo hiệu ứng nổ bung từ tâm ra đúng khung chữ
-                            const angle = Math.random() * Math.PI * 2;
-                            const speed = Math.random() * 2;
-                            const colors = ['#ff7675', '#fd79a8', '#ffeaa7', '#fff'];
-                            const color = colors[Math.floor(Math.random() * colors.length)];
-                            
-                            particles.push(new Particle(
-                                px, py, color, 
-                                Math.cos(angle) * speed, 
-                                Math.sin(angle) * speed, 
-                                0.92, 0.02 // Ma sát nhẹ, trọng lực nhỏ để chữ đọng lại lâu
-                            ));
-                        }
+            const imgData = tempCtx.getImageData(0, 0, 900, 200);
+            const centerX = canvas.width / 2;
+            const centerY = canvas.height * 0.45;
+
+            for (let y = 0; y < 200; y += 4) {
+                for (let x = 0; x < 900; x += 4) {
+                    const index = (y * 900 + x) * 4;
+                    if (imgData.data[index + 3] > 128) {
+                        const px = centerX + (x - 450);
+                        const py = centerY + (y - 100);
+                        
+                        // Lực nổ nhẹ tỏa từ điểm chữ ra xung quanh
+                        const angle = Math.random() * Math.PI * 2;
+                        const speed = Math.random() * 2.5;
+                        const colors = ['#ff7675', '#fd79a8', '#ffeaa7', '#ffffff', '#fdcb6e'];
+                        const color = colors[Math.floor(Math.random() * colors.length)];
+                        
+                        particles.push(new Particle(
+                            px, py, color, 
+                            Math.cos(angle) * speed, 
+                            Math.sin(angle) * speed, 
+                            0.94, 0.03
+                        ));
                     }
                 }
-            }, 1000);
+            }
         }
     </script>
 </body>
