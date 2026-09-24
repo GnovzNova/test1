@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Đêm Trăng Mượt Mà - 5 Giây</title>
+    <title>Đêm Trăng Mượt Mà</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
@@ -31,7 +31,8 @@
             position: absolute;
             top: 50%;
             left: 50%;
-            transform: translate(-50%, -50%);
+            /* Dùng scale để thu nhỏ mượt và chính xác thời gian */
+            transform: translate(-50%, -50%) scale(1);
             z-index: 10;
             width: 360px;
             height: 360px;
@@ -43,11 +44,10 @@
             box-shadow: 0 0 40px rgba(251, 197, 49, 0.4);
             filter: brightness(1);
 
-            /* Transition 5 GIÂY THU NHỎ SIÊU MƯỢT */
+            /* Transition 5 GIÂY CHUẨN XÁC CHO SCALE THU NHỎ */
             transition: filter 3s ease, 
                         box-shadow 3s ease, 
-                        width 5s cubic-bezier(0.25, 1, 0.5, 1), 
-                        height 5s cubic-bezier(0.25, 1, 0.5, 1), 
+                        transform 5s linear, 
                         top 3.5s cubic-bezier(0.25, 1, 0.5, 1);
         }
 
@@ -64,10 +64,9 @@
             cursor: default;
         }
 
-        /* KHI THU NHỎ BÁN KÍNH TRONG 5S */
+        /* THU NHỎ TRONG ĐÚNG 5 GIÂY (GIẢM KÍCH THƯỚC XUỐNG KHOẢNG 43% BAN ĐẦU) */
         #moon.shrink {
-            width: 158px !important;
-            height: 158px !important;
+            transform: translate(-50%, -50%) scale(0.43) !important;
         }
 
         /* KHI BAY LÊN 1/3 TRÊN MÀN HÌNH */
@@ -102,12 +101,12 @@
             background: linear-gradient(to top, #060a14 30%, rgba(6, 10, 20, 0.8) 75%, transparent 100%);
         }
 
-        /* BÓNG 2 NGƯỜI TO CẬN CẢNH (HAI VAI TỰA VÀO NHAU) */
+        /* BÓNG 2 NGƯỜI ĐEN TUYỀN (KHÔNG PHÁT SÁNG) */
         .couple-silhouette {
             position: relative;
             z-index: 6;
             margin-bottom: -10px;
-            filter: drop-shadow(0 -5px 15px rgba(255, 243, 160, 0.25));
+            /* Đã xóa hoàn toàn drop-shadow phát sáng */
         }
 
         /* HƯỚNG DẪN BẤM */
@@ -130,26 +129,24 @@
     <!-- MẶT TRĂNG -->
     <div id="moon" onclick="startSequence()"></div>
 
-    <!-- CẢNH BÓNG 2 NGƯỜI TO CẬN CẢNH (CHỈ HIỆN 2 VAI TỰA NHAU) -->
+    <!-- CẢNH BÓNG 2 NGƯỜI ĐEN TUYỀN KHÔNG PHÁT SÁNG -->
     <div id="bottom-scene">
         <div class="ground-base"></div>
         <svg class="couple-silhouette" width="340" height="220" viewBox="0 0 340 220">
             <!-- Đồi đất cong nhẹ -->
             <path d="M 0,220 Q 170,170 340,220 Z" fill="#090f1d"/>
             
-            <!-- Người bên trái (Vai to & Đầu) -->
-            <circle cx="130" cy="85" r="28" fill="#11192b"/>
-            <!-- Phần vai rộng tựa sang phải -->
-            <path d="M 70,220 C 70,140 100,120 145,120 C 175,120 185,150 185,220 Z" fill="#11192b"/>
+            <!-- Người bên trái -->
+            <circle cx="130" cy="85" r="28" fill="#090f1d"/>
+            <path d="M 70,220 C 70,140 100,120 145,120 C 175,120 185,150 185,220 Z" fill="#090f1d"/>
             
-            <!-- Người bên phải nghiêng đầu tựa hẳn vào vai người trái -->
-            <circle cx="182" cy="98" r="24" fill="#11192b"/>
-            <!-- Phần vai nghiêng sát vào -->
-            <path d="M 150,220 C 150,150 170,135 210,138 C 240,148 245,180 255,220 Z" fill="#11192b"/>
+            <!-- Người bên phải nghiêng đầu tựa sát vào vai người trái -->
+            <circle cx="182" cy="98" r="24" fill="#090f1d"/>
+            <path d="M 150,220 C 150,150 170,135 210,138 C 240,148 245,180 255,220 Z" fill="#090f1d"/>
         </svg>
     </div>
 
-    <div id="hint">Rê chuột làm sáng 3s, click vào Mặt Trăng để thu nhỏ</div>
+    <div id="hint">Rê chuột làm sáng 3s, click vào Mặt Trăng để bắt đầu</div>
 
     <script>
         const moon = document.getElementById('moon');
@@ -162,22 +159,22 @@
             if (isStarted) return;
             isStarted = true;
 
-            // 1. Giữ nguyên độ sáng rực rỡ và ẩn chữ hướng dẫn
+            // 1. Chốt độ sáng rực rỡ và ẩn chữ hướng dẫn
             moon.classList.add('is-clicked');
             hint.style.opacity = '0';
 
-            // 2. Đợi đúng 3s phát sáng rực rỡ rồi bắt đầu thu nhỏ trong 5s mượt mà
+            // 2. Giữ nguyên độ sáng 3 giây rồi bắt đầu thu nhỏ đúng 5 giây
             setTimeout(() => {
                 moon.classList.add('shrink');
 
-                // 3. Sau khi thu nhỏ xong (5s), dừng nghỉ 2s
+                // 3. Đúng 5 giây thu nhỏ xong, dừng nghỉ 2 giây
                 setTimeout(() => {
-                    // 4. Từ từ bay lên 1/3 phía trên
+                    // 4. Từ từ bay lên 1/3 phía trên màn hình
                     moon.classList.add('move-up');
 
-                    // 5. Đồng thời hiện rõ hình bóng 2 người cận cảnh vai tựa vào nhau
+                    // 5. Đồng thời hiện hình bóng 2 người tựa vào nhau phía dưới
                     bottomScene.classList.add('show');
-                }, 2000);
+                }, 5000 + 2000); // 5s thu nhỏ + 2s tạm dừng
 
             }, 3000);
         }
