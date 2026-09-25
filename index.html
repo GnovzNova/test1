@@ -71,7 +71,7 @@
             top: 22% !important;
         }
 
-        /* KHU VỰC BÓNG NGƯỜI - ĐÃ XOÁ SẠCH PHẦN ĐẤT THỪA 2 BÊN */
+        /* KHU VỰC BÓNG NGƯỜI - GỌN TẠI ĐÁY MÀN HÌNH */
         #bottom-scene {
             position: fixed;
             bottom: 0;
@@ -113,7 +113,6 @@
 
     <div id="moon" onclick="startSequence()"></div>
 
-    <!-- CHỈ CÒN LẠI ĐÚNG BÓNG 2 NGƯỜI NHỎ GỌN -->
     <div id="bottom-scene">
         <svg class="couple-silhouette" width="220" height="150" viewBox="0 0 220 150">
             <circle cx="85" cy="45" r="24" fill="#1e293b"/>
@@ -191,29 +190,28 @@
         animate();
 
         class Rocket {
-            constructor(startX, startY, targetX, targetY, letterGroup = null) {
-                this.x = startX;
-                this.y = startY;
+            constructor(targetX, targetY, letterGroup = null) {
+                // Tọa độ X xuất phát BẰNG NGUYÊN tọa độ X đích để BAY THẲNG ĐỨNG
+                this.x = targetX;
+                this.y = canvas.height;
                 this.targetX = targetX;
                 this.targetY = targetY;
-                this.speed = 12;
-                this.angle = Math.atan2(targetY - startY, targetX - startX);
-                this.vx = Math.cos(this.angle) * this.speed;
-                this.vy = Math.sin(this.angle) * this.speed;
+                this.speed = 13;
+                this.vy = -this.speed; // Bay thẳng đứng từ dưới lên
                 this.exploded = false;
                 this.letterGroup = letterGroup;
             }
 
             update() {
-                this.x += this.vx;
                 this.y += this.vy;
 
-                if (Math.hypot(this.targetX - this.x, this.targetY - this.y) < 15) {
+                // Khi bay tới hoặc vượt qua độ cao target
+                if (this.y <= this.targetY) {
                     this.exploded = true;
                     if (this.letterGroup) {
                         explodeLetter(this.letterGroup);
                     } else {
-                        explodeNormal(this.x, this.y);
+                        explodeNormal(this.x, this.targetY);
                     }
                 }
             }
@@ -248,16 +246,16 @@
                 this.vy += this.gravity;
                 this.x += this.vx;
                 this.y += this.vy;
-                this.alpha -= 0.008;
+                this.alpha -= 0.007; // Giữ chữ lâu mờ một chút
             }
 
             draw() {
                 ctx.save();
                 ctx.globalAlpha = Math.max(0, this.alpha);
                 ctx.beginPath();
-                ctx.arc(this.x, this.y, 2.2, 0, Math.PI * 2);
+                ctx.arc(this.x, this.y, 2.8, 0, Math.PI * 2);
                 ctx.fillStyle = this.color;
-                ctx.shadowBlur = 6;
+                ctx.shadowBlur = 8;
                 ctx.shadowColor = this.color;
                 ctx.fill();
                 ctx.restore();
@@ -277,7 +275,7 @@
 
         let phase1Count = 0;
         function startFireworksPhase1() {
-            if (phase1Count >= 8) {
+            if (phase1Count >= 6) {
                 setTimeout(() => {
                     startFireworksTextPhase();
                 }, 1000);
@@ -287,10 +285,9 @@
             const waveRockets = 2 + Math.floor(Math.random() * 3);
             for (let i = 0; i < waveRockets; i++) {
                 setTimeout(() => {
-                    const startX = canvas.width * (0.15 + Math.random() * 0.7);
-                    const targetX = startX + (Math.random() * 80 - 40);
+                    const targetX = canvas.width * (0.15 + Math.random() * 0.7);
                     const targetY = canvas.height * (0.2 + Math.random() * 0.25);
-                    rockets.push(new Rocket(startX, canvas.height, targetX, targetY));
+                    rockets.push(new Rocket(targetX, targetY));
                 }, i * 200);
             }
 
@@ -298,65 +295,62 @@
             setTimeout(startFireworksPhase1, 1400);
         }
 
-        // BẮN PHÁO HOA TỰ NỔ CHỮ
+        // PHÂN BỔ BẮN 10 QUẢ BAY THẲNG ĐỨNG TẠO CHỮ TO ĐÙNG
         function startFireworksTextPhase() {
             const tempCanvas = document.createElement('canvas');
             const tempCtx = tempCanvas.getContext('2d');
-            tempCanvas.width = 900;
-            tempCanvas.height = 200;
+            
+            // Tăng Canvas đệm rộng hơn để chứa chữ to
+            tempCanvas.width = 1400;
+            tempCanvas.height = 300;
 
-            tempCtx.font = 'bold 90px "Segoe UI", Arial, sans-serif';
+            // FONT CHỮ SIÊU TO GẤP ĐÔI (160px)
+            tempCtx.font = 'bold 160px "Segoe UI", Arial, sans-serif';
             tempCtx.fillStyle = '#ffffff';
             tempCtx.textAlign = 'center';
             tempCtx.textBaseline = 'middle';
-            tempCtx.fillText('I LOVE YOU', 450, 100);
+            tempCtx.fillText('I LOVE YOU', 700, 150);
 
-            const imgData = tempCtx.getImageData(0, 0, 900, 200);
+            const imgData = tempCtx.getImageData(0, 0, 1400, 300);
             const centerX = canvas.width / 2;
             const centerY = canvas.height * 0.45;
 
-            // Nhóm hạt theo từng khu vực chữ
             const letterGroups = Array.from({ length: 10 }, () => []);
 
-            for (let y = 0; y < 200; y += 4) {
-                for (let x = 0; x < 900; x += 4) {
-                    const index = (y * 900 + x) * 4;
+            for (let y = 0; y < 300; y += 5) {
+                for (let x = 0; x < 1400; x += 5) {
+                    const index = (y * 1400 + x) * 4;
                     if (imgData.data[index + 3] > 128) {
-                        const px = centerX + (x - 450);
-                        const py = centerY + (y - 100);
+                        const px = centerX + (x - 700);
+                        const py = centerY + (y - 150);
 
-                        // Chia điểm theo 10 quả tên lửa dọc chiều ngang
-                        const groupIdx = Math.min(9, Math.floor((x / 900) * 10));
+                        const groupIdx = Math.min(9, Math.floor((x / 1400) * 10));
                         letterGroups[groupIdx].push({ x: px, y: py });
                     }
                 }
             }
 
-            // Bắn 10 quả tên lửa lên đúng vị trí 10 cụm chữ
+            // Bắn 10 quả thẳng đứng lên các cụm chữ
             for (let i = 0; i < 10; i++) {
                 if (letterGroups[i].length === 0) continue;
 
-                // Tính tâm nổ của cụm hạt chữ này
                 let avgX = 0, avgY = 0;
                 letterGroups[i].forEach(p => { avgX += p.x; avgY += p.y; });
                 avgX /= letterGroups[i].length;
                 avgY /= letterGroups[i].length;
 
-                const startX = canvas.width * (0.1 + (i / 9) * 0.8);
-                
                 setTimeout(() => {
-                    rockets.push(new Rocket(startX, canvas.height, avgX, avgY, letterGroups[i]));
-                }, i * 150); // Bắn nối đuôi nhau cực đẹp
+                    rockets.push(new Rocket(avgX, avgY, letterGroups[i]));
+                }, i * 120);
             }
         }
 
-        // KHI TÊN LỬA TỚI ĐÍCH -> NỔ TUNG RA CHỮ CỦA NÓ
         function explodeLetter(points) {
             const colors = ['#ff7675', '#fd79a8', '#ffeaa7', '#ffffff', '#fdcb6e'];
 
             points.forEach(p => {
                 const angle = Math.random() * Math.PI * 2;
-                const speed = Math.random() * 2;
+                const speed = Math.random() * 2.5;
                 const color = colors[Math.floor(Math.random() * colors.length)];
 
                 particles.push(new Particle(
