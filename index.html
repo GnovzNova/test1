@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Đêm Trăng & Pháo Hoa I Love You</title>
+    <title>Đêm Trăng & Pháo Hoa Chữ</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
@@ -71,7 +71,6 @@
             top: 22% !important;
         }
 
-        /* KHU VỰC BÓNG NGƯỜI - GỌN TẠI ĐÁY MÀN HÌNH */
         #bottom-scene {
             position: fixed;
             bottom: 0;
@@ -158,7 +157,7 @@
                         startFireworksPhase1();
                     }, 4000);
 
-                }, 5000 + 2000);
+                }, 7000);
 
             }, 3000);
         }
@@ -168,7 +167,7 @@
 
         function animate() {
             requestAnimationFrame(animate);
-            ctx.fillStyle = 'rgba(2, 5, 14, 0.2)';
+            ctx.fillStyle = 'rgba(2, 5, 14, 0.18)';
             ctx.fillRect(0, 0, canvas.width, canvas.height);
 
             for (let i = rockets.length - 1; i >= 0; i--) {
@@ -190,26 +189,25 @@
         animate();
 
         class Rocket {
-            constructor(targetX, targetY, letterGroup = null) {
-                // Tọa độ X xuất phát BẰNG NGUYÊN tọa độ X đích để BAY THẲNG ĐỨNG
+            constructor(targetX, targetY, burstPoints = null) {
                 this.x = targetX;
                 this.y = canvas.height;
                 this.targetX = targetX;
                 this.targetY = targetY;
-                this.speed = 13;
-                this.vy = -this.speed; // Bay thẳng đứng từ dưới lên
+                this.speed = 14;
+                this.vy = -this.speed;
                 this.exploded = false;
-                this.letterGroup = letterGroup;
+                this.burstPoints = burstPoints;
             }
 
             update() {
                 this.y += this.vy;
 
-                // Khi bay tới hoặc vượt qua độ cao target
                 if (this.y <= this.targetY) {
                     this.exploded = true;
-                    if (this.letterGroup) {
-                        explodeLetter(this.letterGroup);
+                    if (this.burstPoints) {
+                        // Nổ bung thành các chùm pháo nhỏ dọc theo nét chữ
+                        createFireworksText(this.burstPoints);
                     } else {
                         explodeNormal(this.x, this.targetY);
                     }
@@ -229,15 +227,15 @@
         }
 
         class Particle {
-            constructor(x, y, color, vx, vy, friction = 0.95, gravity = 0.05) {
+            constructor(x, y, color, vx, vy) {
                 this.x = x;
                 this.y = y;
                 this.color = color;
                 this.vx = vx;
                 this.vy = vy;
                 this.alpha = 1;
-                this.friction = friction;
-                this.gravity = gravity;
+                this.friction = 0.94;
+                this.gravity = 0.04;
             }
 
             update() {
@@ -246,16 +244,16 @@
                 this.vy += this.gravity;
                 this.x += this.vx;
                 this.y += this.vy;
-                this.alpha -= 0.007; // Giữ chữ lâu mờ một chút
+                this.alpha -= 0.009;
             }
 
             draw() {
                 ctx.save();
                 ctx.globalAlpha = Math.max(0, this.alpha);
                 ctx.beginPath();
-                ctx.arc(this.x, this.y, 2.8, 0, Math.PI * 2);
+                ctx.arc(this.x, this.y, 2, 0, Math.PI * 2);
                 ctx.fillStyle = this.color;
-                ctx.shadowBlur = 8;
+                ctx.shadowBlur = 5;
                 ctx.shadowColor = this.color;
                 ctx.fill();
                 ctx.restore();
@@ -264,10 +262,10 @@
 
         function explodeNormal(x, y) {
             const colors = ['#ff7675', '#fd79a8', '#ffeaa7', '#74b9ff', '#55efc4'];
-            const count = 40 + Math.floor(Math.random() * 20);
+            const count = 40;
             for (let i = 0; i < count; i++) {
                 const angle = Math.random() * Math.PI * 2;
-                const speed = Math.random() * 7 + 2;
+                const speed = Math.random() * 6 + 2;
                 const color = colors[Math.floor(Math.random() * colors.length)];
                 particles.push(new Particle(x, y, color, Math.cos(angle) * speed, Math.sin(angle) * speed));
             }
@@ -275,90 +273,98 @@
 
         let phase1Count = 0;
         function startFireworksPhase1() {
-            if (phase1Count >= 6) {
+            if (phase1Count >= 5) {
                 setTimeout(() => {
                     startFireworksTextPhase();
                 }, 1000);
                 return;
             }
 
-            const waveRockets = 2 + Math.floor(Math.random() * 3);
-            for (let i = 0; i < waveRockets; i++) {
+            for (let i = 0; i < 2; i++) {
                 setTimeout(() => {
-                    const targetX = canvas.width * (0.15 + Math.random() * 0.7);
-                    const targetY = canvas.height * (0.2 + Math.random() * 0.25);
+                    const targetX = canvas.width * (0.2 + Math.random() * 0.6);
+                    const targetY = canvas.height * (0.2 + Math.random() * 0.2);
                     rockets.push(new Rocket(targetX, targetY));
-                }, i * 200);
+                }, i * 250);
             }
 
             phase1Count++;
-            setTimeout(startFireworksPhase1, 1400);
+            setTimeout(startFireworksPhase1, 1200);
         }
 
-        // PHÂN BỔ BẮN 10 QUẢ BAY THẲNG ĐỨNG TẠO CHỮ TO ĐÙNG
+        // TẠO PHÁO HOA NỔ THÀNH CÁC CHÙM BUNG TOẠ ĐỘ CHỮ
         function startFireworksTextPhase() {
             const tempCanvas = document.createElement('canvas');
             const tempCtx = tempCanvas.getContext('2d');
             
-            // Tăng Canvas đệm rộng hơn để chứa chữ to
-            tempCanvas.width = 1400;
-            tempCanvas.height = 300;
+            tempCanvas.width = 1600;
+            tempCanvas.height = 400;
 
-            // FONT CHỮ SIÊU TO GẤP ĐÔI (160px)
-            tempCtx.font = 'bold 160px "Segoe UI", Arial, sans-serif';
+            tempCtx.font = 'bold 150px "Segoe UI", Arial, sans-serif';
             tempCtx.fillStyle = '#ffffff';
             tempCtx.textAlign = 'center';
             tempCtx.textBaseline = 'middle';
-            tempCtx.fillText('I LOVE YOU', 700, 150);
+            tempCtx.fillText('I LOVE YOU', 800, 200);
 
-            const imgData = tempCtx.getImageData(0, 0, 1400, 300);
+            const imgData = tempCtx.getImageData(0, 0, 1600, 400);
             const centerX = canvas.width / 2;
-            const centerY = canvas.height * 0.45;
+            const centerY = canvas.height * 0.42;
 
-            const letterGroups = Array.from({ length: 10 }, () => []);
+            const burstPoints = [];
+            // Lấy mẫu điểm thưa hơn để đặt các điểm nổ pháo hoa tròn (burst centers)
+            const step = 28;
 
-            for (let y = 0; y < 300; y += 5) {
-                for (let x = 0; x < 1400; x += 5) {
-                    const index = (y * 1400 + x) * 4;
+            for (let y = 0; y < 400; y += step) {
+                for (let x = 0; x < 1600; x += step) {
+                    const index = (y * 1600 + x) * 4;
                     if (imgData.data[index + 3] > 128) {
-                        const px = centerX + (x - 700);
-                        const py = centerY + (y - 150);
-
-                        const groupIdx = Math.min(9, Math.floor((x / 1400) * 10));
-                        letterGroups[groupIdx].push({ x: px, y: py });
+                        const px = centerX + (x - 800);
+                        const py = centerY + (y - 200);
+                        burstPoints.push({ x: px, y: py });
                     }
                 }
             }
 
-            // Bắn 10 quả thẳng đứng lên các cụm chữ
-            for (let i = 0; i < 10; i++) {
-                if (letterGroups[i].length === 0) continue;
-
-                let avgX = 0, avgY = 0;
-                letterGroups[i].forEach(p => { avgX += p.x; avgY += p.y; });
-                avgX /= letterGroups[i].length;
-                avgY /= letterGroups[i].length;
-
+            // Bắn 5 tên lửa lên cùng lúc để kích nổ toàn bộ pháo hoa xếp hình chữ
+            const launchCols = [0.2, 0.35, 0.5, 0.65, 0.8];
+            launchCols.forEach((colRatio, index) => {
                 setTimeout(() => {
-                    rockets.push(new Rocket(avgX, avgY, letterGroups[i]));
-                }, i * 120);
-            }
+                    const targetX = canvas.width * colRatio;
+                    const targetY = centerY;
+                    // Chỉ giao nhiệm vụ nổ chữ cho quả ở giữa
+                    rockets.push(new Rocket(targetX, targetY, index === 2 ? burstPoints : null));
+                }, index * 100);
+            });
         }
 
-        function explodeLetter(points) {
-            const colors = ['#ff7675', '#fd79a8', '#ffeaa7', '#ffffff', '#fdcb6e'];
+        // TẠO HÀNG CHỤC BỤM PHÁO HOA NHỎ GHÉP THÀNH CHỮ
+        function createFireworksText(points) {
+            const colorPalettes = [
+                ['#ff7675', '#ffeaa7'],
+                ['#74b9ff', '#81ecec'],
+                ['#fd79a8', '#e84393'],
+                ['#55efc4', '#00b894'],
+                ['#fdcb6e', '#e17055']
+            ];
 
-            points.forEach(p => {
-                const angle = Math.random() * Math.PI * 2;
-                const speed = Math.random() * 2.5;
-                const color = colors[Math.floor(Math.random() * colors.length)];
+            points.forEach(pt => {
+                // Mỗi điểm nét chữ là 1 quả pháo hoa mini nổ xèo xèo
+                const palette = colorPalettes[Math.floor(Math.random() * colorPalettes.length)];
+                const particleCount = 18;
 
-                particles.push(new Particle(
-                    p.x, p.y, color,
-                    Math.cos(angle) * speed,
-                    Math.sin(angle) * speed,
-                    0.93, 0.02
-                ));
+                for (let i = 0; i < particleCount; i++) {
+                    const angle = (Math.PI * 2 / particleCount) * i;
+                    const speed = 2 + Math.random() * 2.5; // Bán kính nổ vừa phải
+                    const color = palette[Math.floor(Math.random() * palette.length)];
+
+                    particles.push(new Particle(
+                        pt.x, 
+                        pt.y, 
+                        color, 
+                        Math.cos(angle) * speed, 
+                        Math.sin(angle) * speed
+                    ));
+                }
             });
         }
     </script>
