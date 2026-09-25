@@ -290,7 +290,7 @@
 
     function spawnLanterns() {
       lanterns = [];
-      const totalLanterns = 18;
+      const totalLanterns = 15;
 
       // Staggered chain: many lanterns, but each appears at a controlled
       // interval and at a different lane so the stream feels continuous.
@@ -299,25 +299,25 @@
           if (currentState === STATES.INTERACTIVE_SKY || currentState === STATES.WAITING_LANTERNS_CLEAR) {
             lanterns.push(createLantern(i));
           }
-        }, i * 760 + Math.random() * 180);
+        }, i * 520 + Math.random() * 180);
       }
     }
 
     function createLantern(index = 0) {
-      const scale = Math.random() * 0.30 + 0.70;
-      const laneCount = Math.max(7, Math.floor(width / 130));
-      const lane = index % laneCount;
-      const laneWidth = width / laneCount;
+      // Random horizontal placement like the original, but with NO side-to-side sway.
+      const scale = Math.random() * 0.40 + 0.60;
+      const x = Math.random() * Math.max(1, width - 60) + 30;
+      const staggerRow = Math.floor(index / 5);
 
       return {
-        // Fixed horizontal lane. No sine-wave sway.
-        x: lane * laneWidth + laneWidth * 0.5 + (Math.random() - 0.5) * Math.min(18, laneWidth * 0.12),
-        y: height + 50 + Math.floor(index / laneCount) * 115 + Math.random() * 45,
-        speedY: Math.random() * 0.30 + 0.65,
+        x,
+        y: height + 45 + staggerRow * 105 + Math.random() * 70,
+        // Faster vertical drift, still smooth and steady.
+        speedY: Math.random() * 0.40 + 1.05,
         scale: scale,
-        opacity: Math.random() * 0.22 + 0.68,
-        size: 25 * scale,
-        hitRadius: 25 * scale,
+        opacity: Math.random() * 0.30 + 0.70,
+        size: 24 * scale,
+        hitRadius: 24 * scale,
         index: index
       };
     }
@@ -385,6 +385,14 @@
 
     canvas.addEventListener('click', (e) => {
       if (activeCardOpen) return;
+
+      // Fireworks are fully automatic. Clicking never launches or detonates them.
+      if (currentState === STATES.FIREWORKS_SHOW ||
+          currentState === STATES.FIREWORKS_PAUSE ||
+          currentState === STATES.LOVE_FOREVER_BURST ||
+          currentState === STATES.ENDING_TEXT) {
+        return;
+      }
 
       const rect = canvas.getBoundingClientRect();
       const mouseX = e.clientX - rect.left;
@@ -509,9 +517,11 @@
       fireworks.push({
         x: startX,
         y: height - cameraOffsetY,
+        prevY: height - cameraOffsetY,
         targetY: targetY,
-        speed: Math.random() * 3 + 7,
+        speed: Math.random() * 3.5 + 8,
         color: colors[Math.floor(Math.random() * colors.length)],
+        trail: [],
         exploded: false
       });
     }
@@ -541,8 +551,9 @@
           x: width / 2 + i * 40,
           y: height - cameraOffsetY,
           targetY: height * 0.22 - cameraOffsetY,
-          speed: 9,
+          speed: 9.5,
           color: '#fef08a',
+          trail: [],
           exploded: false,
           isTextRocket: i === 0
         });
@@ -691,7 +702,8 @@
           if (l.y < -60) {
             if (currentState === STATES.INTERACTIVE_SKY) {
               // Reuse the same horizontal lane and send it far below the screen.
-              l.y = height + 160 + (l.index % 5) * 55;
+              l.x = Math.random() * Math.max(1, width - 60) + 30;
+              l.y = height + 120 + (l.index % 5) * 65 + Math.random() * 55;
             } else {
               lanterns.splice(i, 1);
             }
@@ -714,13 +726,30 @@
       // 4. Draw Fireworks & Particles
       for (let i = fireworks.length - 1; i >= 0; i--) {
         const fw = fireworks[i];
+        fw.prevY = fw.y;
         fw.y -= fw.speed;
 
+        fw.trail.push({ y: fw.y });
+        if (fw.trail.length > 9) fw.trail.shift();
+
+        for (let t = 0; t < fw.trail.length; t++) {
+          const point = fw.trail[t];
+          const a = (t + 1) / fw.trail.length * 0.4;
+          ctx.globalAlpha = a;
+          ctx.strokeStyle = fw.color;
+          ctx.lineWidth = Math.max(0.8, 2.2 - t * 0.12);
+          ctx.beginPath();
+          ctx.moveTo(fw.x, point.y - 2);
+          ctx.lineTo(fw.x, point.y + 7);
+          ctx.stroke();
+        }
+
+        ctx.globalAlpha = 1;
         ctx.strokeStyle = fw.color;
-        ctx.lineWidth = 2;
+        ctx.lineWidth = 2.4;
         ctx.beginPath();
-        ctx.moveTo(fw.x, fw.y + 10);
-        ctx.lineTo(fw.x, fw.y);
+        ctx.moveTo(fw.x, fw.y + 13);
+        ctx.lineTo(fw.x, fw.y - 1);
         ctx.stroke();
 
         if (fw.y <= fw.targetY) {
