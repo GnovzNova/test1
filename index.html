@@ -1,423 +1,773 @@
 <!DOCTYPE html>
 <html lang="vi">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Trung Thu ✨</title>
-    <link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@700&family=Montserrat:wght@400;600&display=swap" rel="stylesheet">
-    <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        body {
-            background: #02020a;
-            overflow: hidden;
-            font-family: 'Montserrat', sans-serif;
-            color: #fff;
-            user-select: none;
-        }
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Tặng Em Bé Mặt Trăng Nhỏ 🌕✨</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Dancing+Script:wght@600;700&family=Quicksand:wght@400;500;600;700&display=swap');
+    
+    body {
+      margin: 0;
+      padding: 0;
+      background-color: #030712;
+      color: #f9fafb;
+      font-family: 'Quicksand', sans-serif;
+      overflow: hidden;
+      user-select: none;
+    }
 
-        canvas.bg-stars {
-            position: fixed;
-            top: 0; left: 0;
-            width: 100vw; height: 100vh;
-            z-index: 1;
-            pointer-events: none;
-        }
+    .font-handwriting {
+      font-family: 'Dancing Script', cursive;
+    }
 
-        /* ----- 1. MÀN TRĂNG ----- */
-        #moon-screen {
-            position: fixed;
-            width: 100vw; height: 100vh;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            z-index: 10;
-            transition: opacity 1.2s ease, visibility 1.2s ease;
-        }
+    /* Custom scrollbar & glassmorphism */
+    .glass-card {
+      background: rgba(15, 23, 42, 0.75);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.6);
+    }
 
-        .moon-wrapper {
-            position: relative;
-            cursor: pointer;
-            text-align: center;
-        }
+    .blinking-cursor::after {
+      content: '|';
+      animation: blink 0.8s infinite;
+      color: #fef08a;
+      margin-left: 2px;
+    }
 
-        .moon {
-            width: 200px; height: 200px;
-            background: radial-gradient(circle at 35% 35%, #ffffff 0%, #fff3a0 50%, #fbc531 100%);
-            border-radius: 50%;
-            box-shadow: 
-                0 0 30px #fff,
-                0 0 60px #fbc531,
-                0 0 120px rgba(251, 197, 49, 0.5),
-                inset -20px -20px 50px rgba(0,0,0,0.3);
-            transition: all 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-            margin: 0 auto;
-        }
+    @keyframes blink {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0; }
+    }
 
-        .moon-wrapper:hover .moon {
-            transform: scale(1.1);
-            box-shadow: 
-                0 0 50px #fff,
-                0 0 100px #fbc531,
-                0 0 180px rgba(251, 197, 49, 0.8);
-        }
+    /* Smooth Canvas overlay */
+    canvas {
+      display: block;
+      position: absolute;
+      top: 0;
+      left: 0;
+      z-index: 1;
+    }
 
-        .hint-text {
-            margin-top: 30px;
-            font-size: 1rem;
-            letter-spacing: 2px;
-            color: #e1b12c;
-            text-transform: uppercase;
-            text-shadow: 0 0 8px rgba(225, 177, 44, 0.5);
-        }
-
-        /* ----- 2. MÀN NGƯỜI NHẢY ----- */
-        #dance-screen {
-            position: fixed;
-            width: 100vw; height: 100vh;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            opacity: 0; visibility: hidden;
-            transition: opacity 1s ease, visibility 1s ease;
-            z-index: 5;
-        }
-
-        .dancer-container {
-            position: relative;
-            cursor: pointer;
-            text-align: center;
-        }
-
-        .dancer-svg {
-            width: 180px; height: 240px;
-            filter: drop-shadow(0 0 15px #fbc531);
-            animation: danceMove 1.2s ease-in-out infinite alternate;
-            transform-origin: bottom center;
-        }
-
-        .dancer-hint {
-            margin-top: 20px;
-            font-family: 'Dancing Script', cursive;
-            font-size: 1.8rem;
-            color: #ffeaa7;
-            text-shadow: 0 0 10px rgba(255, 234, 167, 0.8);
-        }
-
-        @keyframes danceMove {
-            0% { transform: translateY(0) rotate(-5deg) scaleY(1); }
-            50% { transform: translateY(-15px) rotate(0deg) scaleY(1.03); }
-            100% { transform: translateY(0) rotate(5deg) scaleY(1); }
-        }
-
-        /* ----- 3. MÀN PHÁO HOA ----- */
-        #fireworks-screen {
-            position: fixed;
-            top: 0; left: 0; width: 100vw; height: 100vh;
-            opacity: 0; visibility: hidden;
-            transition: opacity 1.5s ease;
-            z-index: 20;
-            background: #02020a;
-        }
-
-        canvas.fireworks-canvas { display: block; width: 100%; height: 100%; }
-    </style>
+    .ui-layer {
+      position: relative;
+      z-index: 10;
+    }
+  </style>
 </head>
-<body>
+<body class="w-screen h-screen relative flex items-center justify-center">
 
-    <canvas class="bg-stars" id="starsCanvas"></canvas>
+  <!-- Background Canvas for Moon, Stars, Lanterns, Fireworks -->
+  <canvas id="mainCanvas"></canvas>
 
-    <!-- MÀN 1: TRĂNG -->
-    <div id="moon-screen">
-        <div class="moon-wrapper" id="moonBtn">
-            <div class="moon"></div>
-            <div class="hint-text">Chạm vào Mặt Trăng ✨</div>
-        </div>
+  <!-- INTRO SCREEN -->
+  <div id="introScreen" class="ui-layer flex flex-col items-center justify-center p-6 text-center max-w-xl transition-opacity duration-1000">
+    <div class="h-24 flex items-center justify-center">
+      <p id="typewriterText" class="text-xl sm:text-2xl md:text-3xl font-medium tracking-wide text-amber-100/90 leading-relaxed min-h-[3rem]"></p>
     </div>
+  </div>
 
-    <!-- MÀN 2: NGƯỜI NHẢY -->
-    <div id="dance-screen">
-        <div class="dancer-container" id="dancerBtn">
-            <svg class="dancer-svg" viewBox="0 0 100 150">
-                <!-- Đầu -->
-                <circle cx="50" cy="25" r="12" fill="#ffeaa7" />
-                <path d="M 40 20 Q 50 10 60 20 Q 65 35 50 38 Q 35 35 40 20 Z" fill="#2d3436" />
-                <!-- Thân/Váy -->
-                <path d="M 50 37 L 35 75 L 65 75 Z" fill="#ff7675" />
-                <path d="M 35 75 Q 50 95 65 75 L 80 115 Q 50 130 20 115 Z" fill="#fd79a8" />
-                <!-- Tay -->
-                <path d="M 43 45 Q 25 35 15 50" stroke="#ffeaa7" stroke-width="4" stroke-linecap="round" fill="none" />
-                <path d="M 57 45 Q 75 35 85 50" stroke="#ffeaa7" stroke-width="4" stroke-linecap="round" fill="none" />
-                <!-- Chân -->
-                <line x1="42" y1="120" x2="38" y2="145" stroke="#ffeaa7" stroke-width="4" stroke-linecap="round" />
-                <line x1="58" y1="120" x2="62" y2="145" stroke="#ffeaa7" stroke-width="4" stroke-linecap="round" />
-            </svg>
-            <div class="dancer-hint">Chạm vào em nè! 💃</div>
-        </div>
+  <!-- CARD MODAL FOR LANTERNS -->
+  <div id="cardModal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-md opacity-0 pointer-events-none transition-all duration-500">
+    <div id="cardContainer" class="glass-card rounded-2xl p-6 sm:p-8 max-w-lg w-full transform scale-95 transition-transform duration-500 relative border border-amber-200/20">
+      <div class="text-center mb-4">
+        <span class="text-3xl">🏮</span>
+        <h3 class="text-amber-200/80 font-handwriting text-xl mt-1">Lời Chúc Đêm Trung Thu</h3>
+      </div>
+      
+      <div class="min-h-[120px] flex items-center justify-center my-4">
+        <p id="cardText" class="text-lg text-slate-100 text-center font-normal leading-relaxed whitespace-pre-line"></p>
+      </div>
+
+      <div id="cardFooter" class="text-center mt-6 opacity-0 transition-opacity duration-700">
+        <p class="text-xs text-slate-400 font-light tracking-wider">Chạm ra ngoài để khép lại.</p>
+      </div>
     </div>
+  </div>
 
-    <!-- MÀN 3: PHÁO HOA -->
-    <div id="fireworks-screen">
-        <canvas class="fireworks-canvas" id="fireworksCanvas"></canvas>
-    </div>
+  <!-- ENDING TEXT SCREEN -->
+  <div id="endingScreen" class="ui-layer fixed inset-0 flex flex-col items-center justify-center p-6 text-center pointer-events-none z-40">
+    <p id="endingText1" class="text-2xl sm:text-3xl md:text-4xl font-light tracking-widest text-amber-100/90 opacity-0 transition-opacity duration-1000 my-2 font-handwriting">
+      Trung Thu Vui Vẻ Nhé
+    </p>
+    <p id="endingText2" class="text-base sm:text-lg text-rose-200/80 opacity-0 transition-opacity duration-1000 mt-4 tracking-wider">
+      Em Bé Của Em ❤️
+    </p>
+  </div>
 
-    <script>
-        // --- BẦU TRỜI SAO ---
-        const starsCanvas = document.getElementById('starsCanvas');
-        const sCtx = starsCanvas.getContext('2d');
-        let stars = [];
+  <script>
+    // Global Constants & Config
+    const LANTERN_LIMIT = 3;
+    let lanternClicks = 0;
+    let activeCardOpen = false;
 
-        function resizeStars() {
-            starsCanvas.width = window.innerWidth;
-            starsCanvas.height = window.innerHeight;
-            stars = [];
-            for(let i=0; i<150; i++) {
-                stars.push({
-                    x: Math.random() * starsCanvas.width,
-                    y: Math.random() * starsCanvas.height,
-                    size: Math.random() * 1.5,
-                    alpha: Math.random(),
-                    speed: Math.random() * 0.02 + 0.005
-                });
-            }
+    const GREETINGS = [
+      "Gửi em bé,\nChúc em có một đêm Trung Thu thật ấm áp và tràn ngập niềm vui ✨\nDù bầu trời ngoài kia có rộng lớn thế nào, em vẫn luôn là điều đặc biệt nhất.",
+      "Cảm ơn em đã xuất hiện và làm cho những ngày bình thường trở nên thật ngọt ngào 🌕\nMong cho nụ cười của em bé luôn rạng rỡ như ánh trăng đêm nay.",
+      "Mặt trăng nhỏ này là dành riêng cho em đấy ❤️\nHy vọng chúng ta sẽ cùng nhau đi qua thật nhiều mùa Trung Thu trọn vẹn và hạnh phúc hơn nữa."
+    ];
+
+    // State Machine States
+    const STATES = {
+      INTRO_TYPING: 'INTRO_TYPING',
+      DOT_BLINKING: 'DOT_BLINKING',
+      MOON_AWAKENING: 'MOON_AWAKENING',
+      INTERACTIVE_SKY: 'INTERACTIVE_SKY',
+      WAITING_LANTERNS_CLEAR: 'WAITING_LANTERNS_CLEAR',
+      MOON_GLOWING_UP: 'MOON_GLOWING_UP',
+      MOON_SHRINKING: 'MOON_SHRINKING',
+      CAMERA_PANNING: 'CAMERA_PANNING',
+      FIREWORKS_SHOW: 'FIREWORKS_SHOW',
+      FIREWORKS_PAUSE: 'FIREWORKS_PAUSE',
+      LOVE_FOREVER_BURST: 'LOVE_FOREVER_BURST',
+      ENDING_TEXT: 'ENDING_TEXT'
+    };
+
+    let currentState = STATES.INTRO_TYPING;
+
+    // DOM Elements
+    const canvas = document.getElementById('mainCanvas');
+    const ctx = canvas.getContext('2d');
+    const typewriterTextEl = document.getElementById('typewriterText');
+    const introScreenEl = document.getElementById('introScreen');
+    const cardModal = document.getElementById('cardModal');
+    const cardContainer = document.getElementById('cardContainer');
+    const cardTextEl = document.getElementById('cardText');
+    const cardFooter = document.getElementById('cardFooter');
+    const endingText1 = document.getElementById('endingText1');
+    const endingText2 = document.getElementById('endingText2');
+
+    // Canvas Dimensions & Camera Offset
+    let width, height;
+    let cameraOffsetY = 0;
+    let targetCameraOffsetY = 0;
+
+    function resize() {
+      width = canvas.width = window.innerWidth;
+      height = canvas.height = window.innerHeight;
+    }
+    window.addEventListener('resize', resize);
+    resize();
+
+    // World Elements Data Structures
+    let stars = [];
+    let lanterns = [];
+    let fireworks = [];
+    let particles = [];
+    let textParticles = [];
+
+    // Moon Properties
+    const moon = {
+      x: 0,
+      y: 0,
+      radius: 0,
+      targetRadius: 0,
+      opacity: 0,
+      glowOpacity: 0,
+      isAwake: false,
+      isHovered: false
+    };
+
+    // --- INTRO TYPEWRITER LOGIC ---
+    const introLines = [
+      "25-9-2026",
+      "Rằm tháng 8 rồi đấy",
+      "Thế em bé đã có quà gì chưa",
+      "Tặng em bé một mặt trăng nhỏ nhé!"
+    ];
+
+    async function runIntroTypewriter() {
+      typewriterTextEl.classList.add('blinking-cursor');
+      
+      for (let i = 0; i < introLines.length; i++) {
+        const line = introLines[i];
+        
+        // Type line
+        for (let j = 0; j <= line.length; j++) {
+          typewriterTextEl.innerText = line.substring(0, j);
+          await sleep(70 + Math.random() * 40);
         }
-        window.addEventListener('resize', resizeStars);
-        resizeStars();
 
-        function renderStars() {
-            sCtx.clearRect(0, 0, starsCanvas.width, starsCanvas.height);
-            stars.forEach(s => {
-                s.alpha += s.speed;
-                if(s.alpha > 1 || s.alpha < 0) s.speed = -s.speed;
-                sCtx.fillStyle = `rgba(255, 255, 255, ${Math.abs(s.alpha)})`;
-                sCtx.beginPath();
-                sCtx.arc(s.x, s.y, s.size, 0, Math.PI * 2);
-                sCtx.fill();
+        // Blink cursor x4
+        await sleep(1500);
+
+        // Backspace if not the last line
+        if (i < introLines.length - 1) {
+          for (let j = line.length; j >= 0; j--) {
+            typewriterTextEl.innerText = line.substring(0, j);
+            await sleep(35);
+          }
+          await sleep(300);
+        }
+      }
+
+      // Last line completed: hold cursor blink x4, then fade out intro text
+      await sleep(1200);
+      typewriterTextEl.classList.remove('blinking-cursor');
+      introScreenEl.style.opacity = '0';
+      
+      await sleep(1000);
+      introScreenEl.style.display = 'none';
+
+      // Transition to Dot Blinking
+      startDotSequence();
+    }
+
+    function sleep(ms) {
+      return new Promise(resolve => setTimeout(resolve, ms));
+    }
+
+    // --- MOON INITIALIZATION & AWAKENING ---
+    function startDotSequence() {
+      currentState = STATES.DOT_BLINKING;
+      moon.x = width / 2;
+      moon.y = height / 2;
+      moon.radius = 1.5;
+      moon.opacity = 0;
+
+      let blinkCount = 0;
+      const blinkInterval = setInterval(() => {
+        moon.opacity = moon.opacity === 0 ? 0.9 : 0;
+        blinkCount++;
+        if (blinkCount >= 6) { // 3 blinks
+          clearInterval(blinkInterval);
+          startMoonAwakening();
+        }
+      }, 400);
+    }
+
+    function startMoonAwakening() {
+      currentState = STATES.MOON_AWAKENING;
+      moon.opacity = 1;
+      moon.targetRadius = Math.min(width, height) * 0.12;
+      if (moon.targetRadius < 45) moon.targetRadius = 45;
+      if (moon.targetRadius > 90) moon.targetRadius = 90;
+
+      // Expand Moon
+      let startTime = null;
+      function animateAwake(time) {
+        if (!startTime) startTime = time;
+        let progress = (time - startTime) / 2500;
+        if (progress > 1) progress = 1;
+
+        // Smooth ease-out expansion
+        const ease = 1 - Math.pow(1 - progress, 3);
+        moon.radius = 1.5 + (moon.targetRadius - 1.5) * ease;
+        moon.glowOpacity = ease * 0.8;
+
+        if (progress < 1) {
+          requestAnimationFrame(animateAwake);
+        } else {
+          moon.isAwake = true;
+        }
+      }
+      requestAnimationFrame(animateAwake);
+    }
+
+    // --- STARS & LANTERNS GENERATION ---
+    function initStars() {
+      stars = [];
+      const count = Math.floor((width * height) / 3000);
+      for (let i = 0; i < count; i++) {
+        stars.push({
+          x: Math.random() * width,
+          y: Math.random() * height * 1.5, // Cover extended canvas
+          size: Math.random() * 1.5 + 0.5,
+          alpha: Math.random() * 0.8 + 0.2,
+          twinkleSpeed: Math.random() * 0.02 + 0.005
+        });
+      }
+    }
+    initStars();
+
+    function spawnLanterns() {
+      lanterns = [];
+      const totalLanterns = 14;
+      for (let i = 0; i < totalLanterns; i++) {
+        setTimeout(() => {
+          if (currentState === STATES.INTERACTIVE_SKY || currentState === STATES.WAITING_LANTERNS_CLEAR) {
+            lanterns.push(createLantern());
+          }
+        }, i * 600 + Math.random() * 300); // Staggered spawn delay
+      }
+    }
+
+    function createLantern() {
+      const scale = Math.random() * 0.4 + 0.6;
+      return {
+        x: Math.random() * (width - 60) + 30,
+        y: height + Math.random() * 100 + 40,
+        speedY: Math.random() * 0.6 + 0.4,
+        swayAmplitude: Math.random() * 20 + 10,
+        swaySpeed: Math.random() * 0.02 + 0.01,
+        swayOffset: Math.random() * Math.PI * 2,
+        scale: scale,
+        opacity: Math.random() * 0.3 + 0.7,
+        size: 24 * scale
+      };
+    }
+
+    // --- CARD TYPING & INTERACTION ---
+    async function openGreetingCard(index) {
+      activeCardOpen = true;
+      cardModal.classList.remove('pointer-events-none');
+      cardModal.classList.remove('opacity-0');
+      cardContainer.classList.remove('scale-95');
+      cardContainer.classList.add('scale-100');
+      cardFooter.classList.add('opacity-0');
+      cardTextEl.innerText = '';
+      cardTextEl.classList.add('blinking-cursor');
+
+      const text = GREETINGS[index];
+      await sleep(400);
+
+      for (let i = 0; i <= text.length; i++) {
+        if (!activeCardOpen) break;
+        cardTextEl.innerText = text.substring(0, i);
+        await sleep(35 + Math.random() * 20);
+      }
+
+      await sleep(600);
+      cardTextEl.classList.remove('blinking-cursor');
+      cardFooter.classList.remove('opacity-0');
+    }
+
+    function closeGreetingCard() {
+      if (!activeCardOpen) return;
+      activeCardOpen = false;
+      cardModal.classList.add('opacity-0');
+      cardModal.classList.add('pointer-events-none');
+      cardContainer.classList.remove('scale-100');
+      cardContainer.classList.add('scale-95');
+
+      // Increment click state cleanly
+      lanternClicks++;
+
+      // If clicked 3 lanterns, progress state after card closes
+      if (lanternClicks >= LANTERN_LIMIT) {
+        currentState = STATES.WAITING_LANTERNS_CLEAR;
+      }
+    }
+
+    cardModal.addEventListener('click', (e) => {
+      // Close card on clicking anywhere
+      closeGreetingCard();
+    });
+
+    // --- EVENT LISTENERS (MOUSE/TOUCH) ---
+    canvas.addEventListener('mousemove', (e) => {
+      const rect = canvas.getBoundingClientRect();
+      const mouseX = e.clientX - rect.left;
+      const mouseY = e.clientY - rect.top - cameraOffsetY;
+
+      if (currentState === STATES.MOON_AWAKENING || currentState === STATES.INTERACTIVE_SKY || currentState === STATES.MOON_GLOWING_UP) {
+        const dist = Math.hypot(mouseX - moon.x, mouseY - moon.y);
+        moon.isHovered = dist < moon.radius * 1.3;
+      }
+    });
+
+    canvas.addEventListener('click', (e) => {
+      if (activeCardOpen) return;
+
+      const rect = canvas.getBoundingClientRect();
+      const mouseX = e.clientX - rect.left;
+      const mouseY = e.clientY - rect.top - cameraOffsetY;
+
+      // Click Moon in AWAKENING state -> Enter INTERACTIVE_SKY
+      if (currentState === STATES.MOON_AWAKENING) {
+        const dist = Math.hypot(mouseX - moon.x, mouseY - moon.y);
+        if (dist < moon.radius * 1.5) {
+          currentState = STATES.INTERACTIVE_SKY;
+          spawnLanterns();
+        }
+      } 
+      // Click Lanterns
+      else if (currentState === STATES.INTERACTIVE_SKY) {
+        for (let i = lanterns.length - 1; i >= 0; i--) {
+          const l = lanterns[i];
+          const dist = Math.hypot(mouseX - l.x, mouseY - l.y);
+          if (dist < l.size * 1.5) {
+            // Remove clicked lantern and trigger card
+            lanterns.splice(i, 1);
+            openGreetingCard(lanternClicks);
+            break;
+          }
+        }
+      }
+      // Click Moon when ready for Outro (State MOON_GLOWING_UP)
+      else if (currentState === STATES.MOON_GLOWING_UP) {
+        const dist = Math.hypot(mouseX - moon.x, mouseY - moon.y);
+        if (dist < moon.radius * 1.5) {
+          triggerOutroSequence();
+        }
+      }
+    });
+
+    // --- OUTRO SEQUENCE TRANSITIONS ---
+    async function triggerOutroSequence() {
+      currentState = STATES.MOON_SHRINKING;
+
+      // Fast-settle shrink animation
+      const startR = moon.radius;
+      const targetR = 8;
+      let startTime = null;
+
+      await new Promise(resolve => {
+        function shrink(time) {
+          if (!startTime) startTime = time;
+          let p = (time - startTime) / 800; // Fast 0.8s
+          if (p > 1) p = 1;
+          const ease = p * p * p; // Fast start
+          moon.radius = startR - (startR - targetR) * ease;
+          if (p < 1) requestAnimationFrame(shrink);
+          else resolve();
+        }
+        requestAnimationFrame(shrink);
+      });
+
+      // Pause 5s silently
+      await sleep(5000);
+
+      // Camera pan down 1/3 height
+      currentState = STATES.CAMERA_PANNING;
+      targetCameraOffsetY = -height * 0.28;
+      
+      let panStartTime = null;
+      await new Promise(resolve => {
+        function pan(time) {
+          if (!panStartTime) panStartTime = time;
+          let p = (time - panStartTime) / 3500; // Smooth 3.5s pan
+          if (p > 1) p = 1;
+          const ease = 0.5 - Math.cos(p * Math.PI) / 2; // Ease in-out
+          cameraOffsetY = targetCameraOffsetY * ease;
+          if (p < 1) requestAnimationFrame(pan);
+          else resolve();
+        }
+        requestAnimationFrame(pan);
+      });
+
+      // Pause 2s showing silhouettes
+      await sleep(2000);
+
+      // Start 10s Fireworks Show
+      currentState = STATES.FIREWORKS_SHOW;
+      const fireworkInterval = setInterval(() => {
+        if (currentState === STATES.FIREWORKS_SHOW) {
+          launchRandomFirework();
+        }
+      }, 700);
+
+      await sleep(10000);
+      clearInterval(fireworkInterval);
+
+      // 3s Quiet Pause
+      currentState = STATES.FIREWORKS_PAUSE;
+      await sleep(3000);
+
+      // Love Forever Grand Burst
+      currentState = STATES.LOVE_FOREVER_BURST;
+      launchLoveForeverBurst();
+
+      await sleep(5000);
+
+      // Ending Screen Fade In
+      currentState = STATES.ENDING_TEXT;
+      endingText1.style.opacity = '1';
+      await sleep(3000);
+      endingText1.style.opacity = '0';
+      await sleep(1500);
+      endingText2.style.opacity = '1';
+    }
+
+    // --- FIREWORKS & PARTICLE PHYSICS ---
+    function launchRandomFirework() {
+      const startX = width * 0.2 + Math.random() * width * 0.6;
+      const targetY = height * 0.15 + Math.random() * height * 0.25 - cameraOffsetY;
+      const colors = ['#fde047', '#f43f5e', '#38bdf8', '#a855f7', '#34d399', '#fb923c'];
+      
+      fireworks.push({
+        x: startX,
+        y: height - cameraOffsetY,
+        targetY: targetY,
+        speed: Math.random() * 3 + 7,
+        color: colors[Math.floor(Math.random() * colors.length)],
+        exploded: false
+      });
+    }
+
+    function createExplosion(x, y, color) {
+      const particleCount = 60;
+      for (let i = 0; i < particleCount; i++) {
+        const angle = (Math.PI * 2 / particleCount) * i + Math.random() * 0.2;
+        const speed = Math.random() * 5 + 2;
+        particles.push({
+          x: x,
+          y: y,
+          vx: Math.cos(angle) * speed,
+          vy: Math.sin(angle) * speed,
+          color: color,
+          alpha: 1,
+          decay: Math.random() * 0.015 + 0.01,
+          gravity: 0.08
+        });
+      }
+    }
+
+    function launchLoveForeverBurst() {
+      // Launch multiple rockets in unison
+      for (let i = -3; i <= 3; i++) {
+        fireworks.push({
+          x: width / 2 + i * 40,
+          y: height - cameraOffsetY,
+          targetY: height * 0.22 - cameraOffsetY,
+          speed: 9,
+          color: '#fef08a',
+          exploded: false,
+          isTextRocket: i === 0
+        });
+      }
+    }
+
+    function createTextParticles(cx, cy) {
+      // Offscreen canvas to sample text "LOVE FOREVER"
+      const tCanvas = document.createElement('canvas');
+      const tCtx = tCanvas.getContext('2d');
+      tCanvas.width = 800;
+      tCanvas.height = 200;
+      
+      tCtx.fillStyle = '#ffffff';
+      tCtx.font = 'bold 70px "Quicksand", sans-serif';
+      tCtx.textAlign = 'center';
+      tCtx.textBaseline = 'middle';
+      tCtx.fillText('LOVE FOREVER', 400, 100);
+
+      const imgData = tCtx.getImageData(0, 0, 800, 200);
+      const data = imgData.data;
+
+      // Sample pixels to form particles
+      const step = 6;
+      for (let y = 0; y < 200; y += step) {
+        for (let x = 0; x < 800; x += step) {
+          const index = (y * 800 + x) * 4;
+          if (data[index + 3] > 128) {
+            const px = cx + (x - 400) * (width < 640 ? 0.75 : 1.1);
+            const py = cy + (y - 100) * (width < 640 ? 0.75 : 1.1);
+            
+            particles.push({
+              x: cx,
+              y: cy,
+              targetX: px,
+              targetY: py,
+              vx: (px - cx) * 0.08 + (Math.random() - 0.5) * 2,
+              vy: (py - cy) * 0.08 + (Math.random() - 0.5) * 2,
+              color: '#fef08a',
+              alpha: 1,
+              decay: 0.006,
+              gravity: 0.015,
+              isText: true
             });
-            requestAnimationFrame(renderStars);
+          }
         }
-        renderStars();
+      }
+    }
 
-        // --- BƯỚC 1 -> BƯỚC 2: CLICK TRĂNG MOON ---
-        const moonScreen = document.getElementById('moon-screen');
-        const danceScreen = document.getElementById('dance-screen');
-        const fireworksScreen = document.getElementById('fireworks-screen');
+    // --- MAIN RENDER LOOP ---
+    function render(timestamp) {
+      ctx.clearRect(0, 0, width, height);
 
-        document.getElementById('moonBtn').addEventListener('click', () => {
-            moonScreen.style.opacity = '0';
-            moonScreen.style.visibility = 'hidden';
+      // Save context for camera pan
+      ctx.save();
+      ctx.translate(0, cameraOffsetY);
 
-            setTimeout(() => {
-                danceScreen.style.visibility = 'visible';
-                danceScreen.style.opacity = '1';
-            }, 1000);
-        });
+      // 1. Draw Stars
+      for (let s of stars) {
+        s.alpha += Math.sin(timestamp * s.twinkleSpeed) * 0.01;
+        ctx.fillStyle = `rgba(255, 255, 255, ${Math.max(0.1, Math.min(1, s.alpha))})`;
+        ctx.beginPath();
+        ctx.arc(s.x, s.y, s.size, 0, Math.PI * 2);
+        ctx.fill();
+      }
 
-        // --- BƯỚC 2 -> BƯỚC 3: CLICK NGƯỜI NHẢY DANCER ---
-        document.getElementById('dancerBtn').addEventListener('click', () => {
-            danceScreen.style.opacity = '0';
-            danceScreen.style.visibility = 'hidden';
+      // 2. Draw Moon
+      if (moon.opacity > 0) {
+        ctx.save();
+        
+        // Hover dynamics
+        const currentR = moon.isHovered ? moon.radius * 1.08 : moon.radius;
 
-            setTimeout(() => {
-                fireworksScreen.style.visibility = 'visible';
-                fireworksScreen.style.opacity = '1';
-                initFireworks();
-            }, 1000);
-        });
+        // Moon Glow
+        const glowRadius = currentR * (currentState === STATES.MOON_GLOWING_UP ? 3.5 : 2.2);
+        const glowGradient = ctx.createRadialGradient(moon.x, moon.y, currentR * 0.5, moon.x, moon.y, glowRadius);
+        glowGradient.addColorStop(0, `rgba(254, 240, 138, ${moon.glowOpacity})`);
+        glowGradient.addColorStop(0.5, `rgba(253, 224, 71, ${moon.glowOpacity * 0.3})`);
+        glowGradient.addColorStop(1, 'rgba(0, 0, 0, 0)');
 
-        // --- BƯỚC 3: PHÁO HOA TẠO CHỮ "Em Thích Chị ❤️" ---
-        function initFireworks() {
-            const canvas = document.getElementById('fireworksCanvas');
-            const ctx = canvas.getContext('2d');
-            canvas.width = window.innerWidth;
-            canvas.height = window.innerHeight;
+        ctx.fillStyle = glowGradient;
+        ctx.beginPath();
+        ctx.arc(moon.x, moon.y, glowRadius, 0, Math.PI * 2);
+        ctx.fill();
 
-            let rockets = [];
-            let particles = [];
-            let timer = 0;
-            let showText = false;
+        // Moon Solid
+        const moonGradient = ctx.createRadialGradient(
+          moon.x - currentR * 0.3, 
+          moon.y - currentR * 0.3, 
+          currentR * 0.1, 
+          moon.x, 
+          moon.y, 
+          currentR
+        );
+        moonGradient.addColorStop(0, '#ffffff');
+        moonGradient.addColorStop(0.75, '#fef08a');
+        moonGradient.addColorStop(1, '#fde047');
 
-            const GRAVITY = 0.08;
-            const FRICTION = 0.96;
-            const PALETTES = [
-                ['#ff4757', '#ffa502', '#2ed573', '#1e90ff', '#3742fa'],
-                ['#ffffff', '#ffeaa7', '#fdcb6e', '#e17055'],
-                ['#00e5ff', '#6c5ce7', '#a29bfe', '#fd79a8']
-            ];
+        ctx.fillStyle = moonGradient;
+        ctx.globalAlpha = moon.opacity;
+        ctx.beginPath();
+        ctx.arc(moon.x, moon.y, currentR, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.restore();
+      }
 
-            function random(min, max) { return Math.random() * (max - min) + min; }
+      // 3. Draw Lanterns
+      if (currentState === STATES.INTERACTIVE_SKY || currentState === STATES.WAITING_LANTERNS_CLEAR) {
+        for (let i = lanterns.length - 1; i >= 0; i--) {
+          const l = lanterns[i];
+          l.y -= l.speedY;
+          l.x += Math.sin(timestamp * l.swaySpeed + l.swayOffset) * 0.5;
 
-            class Rocket {
-                constructor(targetX, targetY) {
-                    this.x = canvas.width / 2 + random(-150, 150);
-                    this.y = canvas.height;
-                    this.startX = this.x;
-                    this.startY = this.y;
-                    this.targetX = targetX;
-                    this.targetY = targetY;
-                    this.distanceToTarget = Math.hypot(targetX - this.startX, targetY - this.startY);
-                    this.distanceTraveled = 0;
-                    this.angle = Math.atan2(targetY - this.y, targetX - this.x);
-                    this.speed = random(9, 13);
-                    this.trail = [];
-                    this.trailLength = 6;
-                    this.palette = PALETTES[Math.floor(Math.random() * PALETTES.length)];
-                }
+          // Render Lantern
+          ctx.save();
+          ctx.globalAlpha = l.opacity;
+          ctx.translate(l.x, l.y);
 
-                update() {
-                    this.trail.push({ x: this.x, y: this.y });
-                    if (this.trail.length > this.trailLength) this.trail.shift();
+          // Lantern Glow
+          const lGlow = ctx.createRadialGradient(0, 0, 2, 0, 0, l.size * 1.8);
+          lGlow.addColorStop(0, 'rgba(251, 146, 60, 0.8)');
+          lGlow.addColorStop(1, 'rgba(0, 0, 0, 0)');
+          ctx.fillStyle = lGlow;
+          ctx.beginPath();
+          ctx.arc(0, 0, l.size * 1.8, 0, Math.PI * 2);
+          ctx.fill();
 
-                    this.x += Math.cos(this.angle) * this.speed;
-                    this.y += Math.sin(this.angle) * this.speed;
-                    this.distanceTraveled = Math.hypot(this.x - this.startX, this.y - this.startY);
+          // Lantern Body
+          ctx.fillStyle = '#f97316';
+          ctx.beginPath();
+          ctx.roundRect(-l.size * 0.5, -l.size * 0.65, l.size, l.size * 1.3, 6);
+          ctx.fill();
 
-                    if (this.distanceTraveled >= this.distanceToTarget) {
-                        explode(this.targetX, this.targetY, this.palette);
-                        return false;
-                    }
-                    return true;
-                }
+          // Inner Light
+          ctx.fillStyle = '#fef08a';
+          ctx.beginPath();
+          ctx.arc(0, 0, l.size * 0.3, 0, Math.PI * 2);
+          ctx.fill();
 
-                draw() {
-                    ctx.beginPath();
-                    if (this.trail.length > 0) {
-                        ctx.moveTo(this.trail[0].x, this.trail[0].y);
-                        ctx.lineTo(this.x, this.y);
-                    }
-                    ctx.strokeStyle = '#ffeaa7';
-                    ctx.lineWidth = 2.5;
-                    ctx.stroke();
-                }
+          ctx.restore();
+
+          // Recycle/Remove offscreen lanterns
+          if (l.y < -50) {
+            if (currentState === STATES.INTERACTIVE_SKY) {
+              lanterns[i] = createLantern();
+            } else {
+              lanterns.splice(i, 1);
             }
-
-            class Particle {
-                constructor(x, y, color, targetX = null, targetY = null) {
-                    this.x = x; 
-                    this.y = y;
-                    this.color = color;
-                    this.targetX = targetX; 
-                    this.targetY = targetY;
-
-                    this.angle = random(0, Math.PI * 2);
-                    this.speed = random(1, 10);
-                    this.friction = FRICTION;
-                    this.gravity = GRAVITY;
-                    this.alpha = 1;
-                    this.decay = random(0.012, 0.022);
-                    this.trail = [];
-                    this.trailLength = Math.floor(random(6, 12));
-                }
-
-                update() {
-                    if (this.targetX !== null) {
-                        this.x += (this.targetX - this.x) * 0.07;
-                        this.y += (this.targetY - this.y) * 0.07;
-                    } else {
-                        this.trail.push({ x: this.x, y: this.y });
-                        if (this.trail.length > this.trailLength) this.trail.shift();
-
-                        this.speed *= this.friction;
-                        this.x += Math.cos(this.angle) * this.speed;
-                        this.y += Math.sin(this.angle) * this.speed + this.gravity;
-                        this.alpha -= this.decay;
-                    }
-                }
-
-                draw() {
-                    ctx.save();
-                    ctx.globalAlpha = Math.max(0, this.alpha);
-                    
-                    if (this.targetX !== null) {
-                        ctx.fillStyle = this.color;
-                        ctx.shadowBlur = 8;
-                        ctx.shadowColor = this.color;
-                        ctx.beginPath();
-                        ctx.arc(this.x, this.y, 2, 0, Math.PI * 2);
-                        ctx.fill();
-                    } else {
-                        ctx.beginPath();
-                        if (this.trail.length > 0) {
-                            ctx.moveTo(this.trail[0].x, this.trail[0].y);
-                            for (let i = 1; i < this.trail.length; i++) {
-                                ctx.lineTo(this.trail[i].x, this.trail[i].y);
-                            }
-                        }
-                        ctx.strokeStyle = this.color;
-                        ctx.lineWidth = random(1, 2.2);
-                        ctx.stroke();
-                    }
-                    ctx.restore();
-                }
-            }
-
-            function explode(x, y, palette) {
-                const count = Math.floor(random(80, 140));
-                for (let i = 0; i < count; i++) {
-                    particles.push(new Particle(x, y, palette[Math.floor(Math.random() * palette.length)]));
-                }
-            }
-
-            function createTextParticles() {
-                const offCanvas = document.createElement('canvas');
-                const offCtx = offCanvas.getContext('2d');
-                offCanvas.width = canvas.width;
-                offCanvas.height = canvas.height;
-
-                const fontSize = Math.min(canvas.width / 9, 65);
-                offCtx.font = `bold ${fontSize}px 'Dancing Script', cursive`;
-                offCtx.fillStyle = '#fbc531';
-                offCtx.textAlign = 'center';
-                offCtx.fillText('Em Thích Chị ❤️', canvas.width / 2, canvas.height / 2);
-
-                const data = offCtx.getImageData(0, 0, canvas.width, canvas.height).data;
-                const step = canvas.width < 500 ? 4 : 5;
-                for (let y = 0; y < canvas.height; y += step) {
-                    for (let x = 0; x < canvas.width; x += step) {
-                        if (data[(y * canvas.width + x) * 4 + 3] > 128) {
-                            particles.push(new Particle(canvas.width / 2, canvas.height / 2, '#ffeaa7', x, y));
-                        }
-                    }
-                }
-            }
-
-            function loop() {
-                requestAnimationFrame(loop);
-
-                ctx.globalCompositeOperation = 'destination-out';
-                ctx.fillStyle = 'rgba(0, 0, 0, 0.2)';
-                ctx.fillRect(0, 0, canvas.width, canvas.height);
-                ctx.globalCompositeOperation = 'lighter';
-
-                timer++;
-                if (timer < 200 && timer % 20 === 0) {
-                    rockets.push(new Rocket(
-                        random(canvas.width * 0.15, canvas.width * 0.85),
-                        random(canvas.height * 0.1, canvas.height * 0.5)
-                    ));
-                }
-
-                rockets = rockets.filter(r => {
-                    r.draw();
-                    return r.update();
-                });
-
-                if (timer === 220 && !showText) {
-                    showText = true;
-                    particles = [];
-                    createTextParticles();
-                }
-
-                particles.forEach((p, index) => {
-                    p.update();
-                    p.draw();
-                    if (p.alpha <= 0 && p.targetX === null) particles.splice(index, 1);
-                });
-            }
-
-            loop();
+          }
         }
-    </script>
+
+        // Check if all lanterns cleared in WAITING state
+        if (currentState === STATES.WAITING_LANTERNS_CLEAR && lanterns.length === 0) {
+          currentState = STATES.MOON_GLOWING_UP;
+          moon.glowOpacity = 1;
+        }
+      }
+
+      // 4. Draw Fireworks & Particles
+      for (let i = fireworks.length - 1; i >= 0; i--) {
+        const fw = fireworks[i];
+        fw.y -= fw.speed;
+
+        ctx.strokeStyle = fw.color;
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.moveTo(fw.x, fw.y + 10);
+        ctx.lineTo(fw.x, fw.y);
+        ctx.stroke();
+
+        if (fw.y <= fw.targetY) {
+          if (fw.isTextRocket) {
+            createTextParticles(fw.x, fw.y);
+          } else {
+            createExplosion(fw.x, fw.y, fw.color);
+          }
+          fireworks.splice(i, 1);
+        }
+      }
+
+      for (let i = particles.length - 1; i >= 0; i--) {
+        const p = particles[i];
+        p.x += p.vx;
+        p.y += p.vy;
+        p.vy += p.gravity;
+        p.alpha -= p.decay;
+
+        ctx.fillStyle = p.color;
+        ctx.globalAlpha = Math.max(0, p.alpha);
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, p.isText ? 1.8 : 2.2, 0, Math.PI * 2);
+        ctx.fill();
+
+        if (p.alpha <= 0) {
+          particles.splice(i, 1);
+        }
+      }
+
+      // 5. Draw Silhouettes (Revealed after camera pan)
+      if (cameraOffsetY < 0) {
+        ctx.save();
+        const baseGroundY = height + Math.abs(targetCameraOffsetY) - 10;
+
+        // Hill slope
+        ctx.fillStyle = '#020617';
+        ctx.beginPath();
+        ctx.ellipse(width / 2, baseGroundY + 120, width * 0.7, 160, 0, Math.PI, 0);
+        ctx.fill();
+
+        // Two Silhouettes Sitting Together
+        const centerX = width / 2;
+        const groundY = baseGroundY - 20;
+
+        ctx.fillStyle = '#090d16';
+
+        // Person 1 (Left - Head & Torso leaning right)
+        ctx.beginPath();
+        ctx.arc(centerX - 16, groundY - 42, 10, 0, Math.PI * 2); // Head
+        ctx.fill();
+        ctx.beginPath();
+        ctx.ellipse(centerX - 14, groundY - 18, 14, 22, 0.15, 0, Math.PI * 2); // Body
+        ctx.fill();
+
+        // Person 2 (Right - Head leaning on Person 1 shoulder)
+        ctx.beginPath();
+        ctx.arc(centerX + 6, groundY - 38, 9, 0, Math.PI * 2); // Head
+        ctx.fill();
+        ctx.beginPath();
+        ctx.ellipse(centerX + 8, groundY - 16, 13, 20, -0.1, 0, Math.PI * 2); // Body
+        ctx.fill();
+
+        ctx.restore();
+      }
+
+      ctx.restore();
+      requestAnimationFrame(render);
+    }
+
+    // Start App Sequence
+    window.onload = () => {
+      runIntroTypewriter();
+      requestAnimationFrame(render);
+    };
+  </script>
 </body>
 </html>
