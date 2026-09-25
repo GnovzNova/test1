@@ -1,2511 +1,801 @@
-```html
 <!DOCTYPE html>
 <html lang="vi">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Test1</title>
-
-<script src="https://cdn.tailwindcss.com"></script>
-
-<style>
-@import url('https://fonts.googleapis.com/css2?family=Dancing+Script:wght@500;600;700&family=Quicksand:wght@400;500;600;700&display=swap');
-
-* {
-    box-sizing: border-box;
-}
-
-html,
-body {
-    margin: 0;
-    width: 100%;
-    height: 100%;
-    overflow: hidden;
-    background: #02040a;
-}
-
-body {
-    font-family: "Quicksand", sans-serif;
-    color: white;
-    user-select: none;
-}
-
-canvas {
-    position: fixed;
-    inset: 0;
-    width: 100%;
-    height: 100%;
-    display: block;
-}
-
-.ui {
-    position: fixed;
-    inset: 0;
-    z-index: 20;
-    pointer-events: none;
-}
-
-.handwriting {
-    font-family: "Dancing Script", cursive;
-}
-
-.type-cursor::after {
-    content: "|";
-    margin-left: 3px;
-    color: rgba(255, 238, 170, .9);
-    animation: cursorBlink .8s ease-in-out infinite;
-}
-
-@keyframes cursorBlink {
-    0%, 45% { opacity: 1; }
-    50%, 100% { opacity: 0; }
-}
-
-/* =========================
-   CARD
-========================= */
-
-#cardModal {
-    position: fixed;
-    inset: 0;
-    z-index: 100;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-
-    background: rgba(0,0,0,.42);
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
-
-    opacity: 0;
-    pointer-events: none;
-
-    transition:
-        opacity 700ms ease;
-}
-
-#card {
-    width: min(680px, calc(100vw - 32px));
-    min-height: 330px;
-
-    padding: 42px 46px;
-
-    border-radius: 28px;
-
-    background:
-        linear-gradient(
-            145deg,
-            rgba(25, 31, 53, .82),
-            rgba(8, 12, 25, .88)
-        );
-
-    border: 1px solid rgba(255,255,255,.12);
-
-    box-shadow:
-        0 35px 100px rgba(0,0,0,.62),
-        inset 0 1px rgba(255,255,255,.07);
-
-    transform: scale(.94) translateY(15px);
-
-    transition:
-        transform 800ms cubic-bezier(.16,1,.3,1);
-}
-
-#cardModal.open {
-    opacity: 1;
-    pointer-events: auto;
-}
-
-#cardModal.open #card {
-    transform: scale(1) translateY(0);
-}
-
-#cardTitle {
-    color: rgba(255,228,150,.9);
-    font-size: 24px;
-    margin-bottom: 28px;
-}
-
-#cardText {
-    min-height: 145px;
-
-    display: flex;
-    align-items: center;
-    justify-content: center;
-
-    text-align: center;
-
-    font-size: clamp(16px, 2vw, 20px);
-    line-height: 1.9;
-
-    color: rgba(250,248,242,.92);
-}
-
-#cardHint {
-    margin-top: 28px;
-
-    text-align: center;
-
-    font-size: 12px;
-    letter-spacing: .08em;
-
-    color: rgba(255,255,255,.34);
-
-    opacity: 0;
-    transition: opacity 900ms ease;
-}
-
-#cardHint.show {
-    opacity: 1;
-}
-
-/* =========================
-   ENDING
-========================= */
-
-#ending {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-
-    opacity: 0;
-}
-
-.ending-line {
-    opacity: 0;
-    text-align: center;
-}
-
-#ending1 {
-    font-size: clamp(28px, 5vw, 54px);
-    color: rgba(255,239,181,.95);
-}
-
-#ending2 {
-    margin-top: 22px;
-    font-size: clamp(18px, 3vw, 30px);
-    color: rgba(255,205,220,.9);
-}
-
-/* Mobile card */
-@media (max-width: 600px) {
-    #card {
-        padding: 32px 25px;
-        min-height: 300px;
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Tặng Em Bé Mặt Trăng Nhỏ 🌕✨</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Dancing+Script:wght@600;700&family=Quicksand:wght@400;500;600;700&display=swap');
+    
+    body {
+      margin: 0;
+      padding: 0;
+      background-color: #030712;
+      color: #f9fafb;
+      font-family: 'Quicksand', sans-serif;
+      overflow: hidden;
+      user-select: none;
     }
-}
-</style>
+
+    .font-handwriting {
+      font-family: 'Dancing Script', cursive;
+    }
+
+    /* Custom scrollbar & glassmorphism */
+    .glass-card {
+      background: rgba(15, 23, 42, 0.75);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.6);
+    }
+
+    .blinking-cursor::after {
+      content: '|';
+      animation: blink 0.8s infinite;
+      color: #fef08a;
+      margin-left: 2px;
+    }
+
+    @keyframes blink {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0; }
+    }
+
+    /* Smooth Canvas overlay */
+    canvas {
+      display: block;
+      position: absolute;
+      top: 0;
+      left: 0;
+      z-index: 1;
+    }
+
+    .ui-layer {
+      position: relative;
+      z-index: 10;
+    }
+  </style>
 </head>
+<body class="w-screen h-screen relative flex items-center justify-center">
 
-<body>
+  <!-- Background Canvas for Moon, Stars, Lanterns, Fireworks -->
+  <canvas id="mainCanvas"></canvas>
 
-<canvas id="canvas"></canvas>
-
-<!-- =========================
-     INTRO
-========================= -->
-
-<div id="intro" class="ui flex items-center justify-center text-center px-6">
-    <div>
-        <div
-            id="introText"
-            class="text-xl sm:text-2xl md:text-3xl tracking-wide text-amber-100/90 type-cursor">
-        </div>
+  <!-- INTRO SCREEN -->
+  <div id="introScreen" class="ui-layer flex flex-col items-center justify-center p-6 text-center max-w-xl transition-opacity duration-1000">
+    <div class="h-24 flex items-center justify-center">
+      <p id="typewriterText" class="text-xl sm:text-2xl md:text-3xl font-medium tracking-wide text-amber-100/90 leading-relaxed min-h-[3rem]"></p>
     </div>
-</div>
+  </div>
 
-<!-- =========================
-     CARD
-========================= -->
+  <!-- CARD MODAL FOR LANTERNS -->
+  <div id="cardModal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-md opacity-0 pointer-events-none transition-all duration-500">
+    <div id="cardContainer" class="glass-card rounded-2xl p-6 sm:p-8 max-w-lg w-full transform scale-95 transition-transform duration-500 relative border border-amber-200/20">
+      <div class="text-center mb-4">
+        <span class="text-3xl">🏮</span>
+        <h3 class="text-amber-200/80 font-handwriting text-xl mt-1">Lời Chúc Đêm Trung Thu</h3>
+      </div>
+      
+      <div class="min-h-[120px] flex items-center justify-center my-4">
+        <p id="cardText" class="text-lg text-slate-100 text-center font-normal leading-relaxed whitespace-pre-line"></p>
+      </div>
 
-<div id="cardModal">
-
-    <div id="card">
-
-        <div
-            id="cardTitle"
-            class="handwriting text-center">
-            Một lời chúc nhỏ cho em 🌕
-        </div>
-
-        <div id="cardText" class="type-cursor"></div>
-
-        <div id="cardHint">
-            Khép thiệp lại khi em đọc xong nhé
-        </div>
-
+      <div id="cardFooter" class="text-center mt-6 opacity-0 transition-opacity duration-700">
+        <p class="text-xs text-slate-400 font-light tracking-wider">Chạm ra ngoài để khép lại.</p>
+      </div>
     </div>
-
-</div>
-
-<!-- =========================
-     ENDING
-========================= -->
-
-<div id="ending" class="ui">
-
-    <div
-        id="ending1"
-        class="ending-line handwriting">
-        Trung Thu Vui Vẻ Nhé
-    </div>
-
-    <div
-        id="ending2"
-        class="ending-line">
-        Em Bé Của Em ❤️
-    </div>
-
-</div>
-
-
-<script>
-"use strict";
-
-/* =========================================================
-   CONFIG
-========================================================= */
-
-const LANTERN_LIMIT = 3;
-
-const INTRO_LINES = [
-    "25-9-2026",
-    "Rằm tháng 8 rồi đấy",
-    "Thế em bé đã có quà gì chưa",
-    "Tặng em bé một mặt trăng nhỏ nhé!"
-];
-
-const GREETINGS = [
-    "Chúc em bé có một đêm Trung Thu thật vui,\nthật ấm áp và thật nhiều tiếng cười ✨",
-
-    "Mong những ngày phía trước của em\nluôn có thật nhiều điều dịu dàng tìm đến 🌕",
-
-    "Và nếu có một điều ước trong đêm nay,\nthì em hãy giữ nó thật lâu nhé ❤️"
-];
-
-/* =========================================================
-   STATE
-========================================================= */
-
-const STATES = {
-    INTRO: "INTRO",
-    MOON_APPEAR: "MOON_APPEAR",
-    SKY: "SKY",
-    WAIT_LANTERNS: "WAIT_LANTERNS",
-    MOON_READY: "MOON_READY",
-    MOON_SHRINK: "MOON_SHRINK",
-    CAMERA: "CAMERA",
-    FIREWORKS: "FIREWORKS",
-    FIREWORKS_PAUSE: "FIREWORKS_PAUSE",
-    LOVE_FOREVER: "LOVE_FOREVER",
-    ENDING: "ENDING"
-};
-
-let state = STATES.INTRO;
-
-let lanternClicks = 0;
-let activeCard = false;
-
-/* =========================================================
-   CANVAS
-========================================================= */
-
-const canvas = document.getElementById("canvas");
-const ctx = canvas.getContext("2d");
-
-let W = 0;
-let H = 0;
-
-let cameraOffsetY = 0;
-let targetCameraOffsetY = 0;
-
-function resize() {
-
-    const dpr = Math.min(window.devicePixelRatio || 1, 2);
-
-    W = window.innerWidth;
-    H = window.innerHeight;
-
-    canvas.width = W * dpr;
-    canvas.height = H * dpr;
-
-    canvas.style.width = W + "px";
-    canvas.style.height = H + "px";
-
-    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-
-    createStars();
-}
-
-window.addEventListener("resize", resize);
-
-
-/* =========================================================
-   HELPERS
-========================================================= */
-
-const clamp = (v, a, b) =>
-    Math.max(a, Math.min(b, v));
-
-const lerp = (a, b, t) =>
-    a + (b - a) * t;
-
-const easeOutCubic = t =>
-    1 - Math.pow(1 - t, 3);
-
-const easeInOut = t =>
-    0.5 - Math.cos(Math.PI * t) / 2;
-
-const sleep = ms =>
-    new Promise(resolve => setTimeout(resolve, ms));
-
-function random(a, b) {
-    return a + Math.random() * (b - a);
-}
-
-
-/* =========================================================
-   STARS
-========================================================= */
-
-let stars = [];
-
-function createStars() {
-
-    stars = [];
-
-    const amount = Math.floor((W * H) / 5500);
-
-    for (let i = 0; i < amount; i++) {
-
-        stars.push({
-            x: Math.random() * W,
-            y: Math.random() * H * 1.5,
-
-            radius: random(.35, 1.15),
-
-            alpha: random(.18, .7),
-
-            twinkle: random(.4, 1.2),
-
-            phase: Math.random() * Math.PI * 2
-        });
-    }
-}
-
-
-/* =========================================================
-   MOON
-========================================================= */
-
-const moon = {
-
-    x: 0,
-    y: 0,
-
-    radius: 2,
-
-    targetRadius: 80,
-
-    opacity: 0,
-
-    glow: 0,
-
-    hover: false,
-
-    hoverAmount: 0,
-
-    /* once clicked, hover animation is permanently disabled */
-    hoverLocked: false
-};
-
-
-function resetMoon() {
-
-    moon.x = W / 2;
-    moon.y = H / 2;
-
-    moon.radius = 2;
-
-    moon.targetRadius =
-        clamp(Math.min(W, H) * .115, 52, 90);
-
-    moon.opacity = 0;
-    moon.glow = 0;
-
-    moon.hover = false;
-    moon.hoverAmount = 0;
-    moon.hoverLocked = false;
-}
-
-
-/* =========================================================
-   INTRO TYPEWRITER
-========================================================= */
-
-async function runIntro() {
-
-    state = STATES.INTRO;
-
-    lanternClicks = 0;
-
-    resetMoon();
-
-    const intro = document.getElementById("intro");
-    const text = document.getElementById("introText");
-
-    intro.style.opacity = "1";
-    text.classList.add("type-cursor");
-
-    for (let lineIndex = 0;
-         lineIndex < INTRO_LINES.length;
-         lineIndex++) {
-
-        const line = INTRO_LINES[lineIndex];
-
-        /* TYPE */
-
-        for (let i = 0; i <= line.length; i++) {
-
-            text.textContent =
-                line.substring(0, i);
-
-            await sleep(random(45, 80));
-        }
-
-        /* cursor stays */
-
-        await sleep(900);
-
-        /* BACKSPACE except final line */
-
-        if (lineIndex < INTRO_LINES.length - 1) {
-
-            for (let i = line.length; i >= 0; i--) {
-
-                text.textContent =
-                    line.substring(0, i);
-
-                await sleep(32);
-            }
-
-            await sleep(250);
-        }
-    }
-
-    await sleep(1100);
-
-    text.classList.remove("type-cursor");
-
-    intro.style.opacity = "0";
-
-    await sleep(1000);
-
-    intro.style.display = "none";
-
-    startMoonDot();
-}
-
-
-/* =========================================================
-   MOON DOT → MOON
-========================================================= */
-
-async function startMoonDot() {
-
-    state = STATES.MOON_APPEAR;
-
-    resetMoon();
-
-    /* 3 slow blinks */
-
-    for (let i = 0; i < 3; i++) {
-
-        moon.opacity = .9;
-
-        await sleep(430);
-
-        moon.opacity = .08;
-
-        await sleep(430);
-    }
-
-    moon.opacity = 1;
-
-    const startRadius = 2;
-    const start = performance.now();
-
-    /* VERY SLOW moon expansion */
-
-    await new Promise(resolve => {
-
-        function animate(now) {
-
-            const p =
-                clamp((now - start) / 4800, 0, 1);
-
-            const e = easeOutCubic(p);
-
-            moon.radius =
-                lerp(
-                    startRadius,
-                    moon.targetRadius,
-                    e
-                );
-
-            moon.glow =
-                lerp(0, .72, e);
-
-            if (p < 1) {
-
-                requestAnimationFrame(animate);
-
-            } else {
-
-                resolve();
-            }
-        }
-
-        requestAnimationFrame(animate);
-    });
-
-    state = STATES.SKY;
-    spawnLanterns();
-}
-
-
-/* =========================================================
-   LANTERNS
-========================================================= */
-
-let lanterns = [];
-
-/*
-    IMPORTANT:
-
-    Không sway.
-    Không rotation.
-    Không sine-wave.
-
-    Chỉ bay thẳng lên.
-
-    Spawn nối tiếp:
-    0.0s
-    0.75s
-    1.5s
-    2.25s
-    ...
-
-    Vì tốc độ chậm nên chúng sẽ tạo thành
-    một dòng đèn rải rác.
-*/
-
-function createLantern() {
-
-    const scale = random(.72, 1.04);
-
-    return {
-
-        x: random(W * .08, W * .92),
-
-        y: H + random(35, 80),
-
-        speed:
-            random(17, 25),
-
-        size:
-            30 * scale,
-
-        scale,
-
-        alpha:
-            random(.72, .94),
-
-        clicked: false
-    };
-}
-
-
-function spawnLanterns() {
-
-    lanterns = [];
-
-    const total = 16;
-
-    for (let i = 0; i < total; i++) {
-
-        setTimeout(() => {
-
-            if (
-                state === STATES.SKY ||
-                state === STATES.WAIT_LANTERNS
-            ) {
-
-                lanterns.push(
-                    createLantern()
-                );
-            }
-
-        }, i * 760 + random(0, 180));
-    }
-}
-
-
-function drawLantern(l) {
-
-    ctx.save();
-
-    ctx.translate(l.x, l.y);
-
-    ctx.globalAlpha = l.alpha;
-
-    const s = l.size;
-
-    /* glow */
-
-    const glow =
-        ctx.createRadialGradient(
-            0, 0,
-            1,
-            0, 0,
-            s * 1.8
-        );
-
-    glow.addColorStop(
-        0,
-        "rgba(255,185,75,.38)"
-    );
-
-    glow.addColorStop(
-        .45,
-        "rgba(255,120,30,.13)"
-    );
-
-    glow.addColorStop(
-        1,
-        "rgba(0,0,0,0)"
-    );
-
-    ctx.fillStyle = glow;
-
-    ctx.beginPath();
-    ctx.arc(0, 0, s * 1.8, 0, Math.PI * 2);
-    ctx.fill();
-
-
-    /* body */
-
-    const body =
-        ctx.createLinearGradient(
-            -s/2,
-            -s*.65,
-            s/2,
-            s*.65
-        );
-
-    body.addColorStop(
-        0,
-        "#d85b19"
-    );
-
-    body.addColorStop(
-        .5,
-        "#ff8b2c"
-    );
-
-    body.addColorStop(
-        1,
-        "#b83f13"
-    );
-
-    ctx.fillStyle = body;
-
-    ctx.beginPath();
-
-    ctx.roundRect(
-        -s * .42,
-        -s * .57,
-        s * .84,
-        s * 1.08,
-        s * .14
-    );
-
-    ctx.fill();
-
-
-    /* vertical ribs */
-
-    ctx.strokeStyle =
-        "rgba(255,211,125,.32)";
-
-    ctx.lineWidth = 1;
-
-    for (let i = -2; i <= 2; i++) {
-
-        ctx.beginPath();
-
-        ctx.moveTo(
-            i * s * .14,
-            -s * .48
-        );
-
-        ctx.lineTo(
-            i * s * .14,
-            s * .42
-        );
-
-        ctx.stroke();
-    }
-
-
-    /* inner flame */
-
-    const flame =
-        ctx.createRadialGradient(
-            0, 0,
-            0,
-            0, 0,
-            s * .38
-        );
-
-    flame.addColorStop(
-        0,
-        "rgba(255,255,210,.95)"
-    );
-
-    flame.addColorStop(
-        .5,
-        "rgba(255,205,82,.65)"
-    );
-
-    flame.addColorStop(
-        1,
-        "rgba(255,145,40,0)"
-    );
-
-    ctx.fillStyle = flame;
-
-    ctx.beginPath();
-
-    ctx.arc(
-        0,
-        0,
-        s * .38,
-        0,
-        Math.PI * 2
-    );
-
-    ctx.fill();
-
-
-    /* top/bottom */
-
-    ctx.fillStyle =
-        "rgba(255,205,120,.65)";
-
-    ctx.fillRect(
-        -s*.45,
-        -s*.62,
-        s*.9,
-        s*.07
-    );
-
-    ctx.fillRect(
-        -s*.45,
-        s*.45,
-        s*.9,
-        s*.07
-    );
-
-
-    /* little tassel */
-
-    ctx.strokeStyle =
-        "rgba(255,194,102,.65)";
-
-    ctx.beginPath();
-
-    ctx.moveTo(
-        0,
-        s*.52
-    );
-
-    ctx.lineTo(
-        0,
-        s*.82
-    );
-
-    ctx.stroke();
-
-    ctx.beginPath();
-
-    ctx.moveTo(
-        -s*.12,
-        s*.82
-    );
-
-    ctx.lineTo(
-        s*.12,
-        s*.82
-    );
-
-    ctx.stroke();
-
-    ctx.restore();
-}
-
-
-function updateLanterns(dt) {
-
-    for (
-        let i = lanterns.length - 1;
-        i >= 0;
-        i--
-    ) {
-
-        const l = lanterns[i];
-
-        /* PURE VERTICAL MOVEMENT */
-
-        l.y -= l.speed * dt;
-
-        drawLantern(l);
-
-        if (l.y < -80) {
-
-            if (state === STATES.SKY) {
-
-                /*
-                    Không recycle ngay lập tức.
-                    Chờ spawn queue tạo lantern tiếp theo.
-                    Như vậy luồng đèn luôn rải rác.
-                */
-
-                lanterns.splice(i, 1);
-
-            } else {
-
-                lanterns.splice(i, 1);
-            }
-        }
-    }
-
-    if (
-        state === STATES.WAIT_LANTERNS &&
-        lanterns.length === 0
-    ) {
-
-        startMoonReady();
-    }
-}
-
-
-/* =========================================================
-   MOON DRAW
-========================================================= */
-
-function drawMoon() {
-
-    if (moon.opacity <= 0) return;
-
-    let r =
-        moon.radius *
-        (1 + moon.hoverAmount * .055);
-
-    const glowR =
-        r *
-        (2.4 + moon.hoverAmount * .7);
-
-
-    /* outer glow */
-
-    const glow =
-        ctx.createRadialGradient(
-            moon.x,
-            moon.y,
-            r * .3,
-            moon.x,
-            moon.y,
-            glowR
-        );
-
-    glow.addColorStop(
-        0,
-        `rgba(255,241,164,${moon.glow * .48})`
-    );
-
-    glow.addColorStop(
-        .38,
-        `rgba(255,224,96,${moon.glow * .18})`
-    );
-
-    glow.addColorStop(
-        1,
-        "rgba(255,220,100,0)"
-    );
-
-    ctx.fillStyle = glow;
-
-    ctx.beginPath();
-    ctx.arc(
-        moon.x,
-        moon.y,
-        glowR,
-        0,
-        Math.PI * 2
-    );
-
-    ctx.fill();
-
-
-    /* moon body */
-
-    const gradient =
-        ctx.createRadialGradient(
-            moon.x - r*.35,
-            moon.y - r*.38,
-            r*.08,
-
-            moon.x,
-            moon.y,
-            r
-        );
-
-    gradient.addColorStop(
-        0,
-        "#fffef3"
-    );
-
-    gradient.addColorStop(
-        .58,
-        "#fff4b4"
-    );
-
-    gradient.addColorStop(
-        1,
-        "#e9c968"
-    );
-
-    ctx.globalAlpha =
-        moon.opacity;
-
-    ctx.fillStyle = gradient;
-
-    ctx.beginPath();
-
-    ctx.arc(
-        moon.x,
-        moon.y,
-        r,
-        0,
-        Math.PI * 2
-    );
-
-    ctx.fill();
-
-
-    /* subtle craters */
-
-    ctx.globalAlpha =
-        moon.opacity * .12;
-
-    ctx.fillStyle = "#9d8139";
-
-    const craters = [
-        [-.28,-.18,.12],
-        [.22,-.30,.08],
-        [.32,.12,.13],
-        [-.18,.30,.07],
-        [-.38,.22,.055]
+  </div>
+
+  <!-- ENDING TEXT SCREEN -->
+  <div id="endingScreen" class="ui-layer fixed inset-0 flex flex-col items-center justify-center p-6 text-center pointer-events-none z-40">
+    <p id="endingText1" class="text-2xl sm:text-3xl md:text-4xl font-light tracking-widest text-amber-100/90 opacity-0 transition-opacity duration-1000 my-2 font-handwriting">
+      Trung Thu Vui Vẻ Nhé
+    </p>
+    <p id="endingText2" class="text-base sm:text-lg text-rose-200/80 opacity-0 transition-opacity duration-1000 mt-4 tracking-wider">
+      Em Bé Của Em ❤️
+    </p>
+  </div>
+
+  <script>
+    // Global Constants & Config
+    const LANTERN_LIMIT = 3;
+    let lanternClicks = 0;
+    let activeCardOpen = false;
+
+    const GREETINGS = [
+      "Gửi em bé,\nChúc em có một đêm Trung Thu thật ấm áp và tràn ngập niềm vui ✨\nDù bầu trời ngoài kia có rộng lớn thế nào, em vẫn luôn là điều đặc biệt nhất.",
+      "Cảm ơn em đã xuất hiện và làm cho những ngày bình thường trở nên thật ngọt ngào 🌕\nMong cho nụ cười của em bé luôn rạng rỡ như ánh trăng đêm nay.",
+      "Mặt trăng nhỏ này là dành riêng cho em đấy ❤️\nHy vọng chúng ta sẽ cùng nhau đi qua thật nhiều mùa Trung Thu trọn vẹn và hạnh phúc hơn nữa."
     ];
 
-    for (const c of craters) {
+    // State Machine States
+    const STATES = {
+      INTRO_TYPING: 'INTRO_TYPING',
+      DOT_BLINKING: 'DOT_BLINKING',
+      MOON_AWAKENING: 'MOON_AWAKENING',
+      INTERACTIVE_SKY: 'INTERACTIVE_SKY',
+      WAITING_LANTERNS_CLEAR: 'WAITING_LANTERNS_CLEAR',
+      MOON_GLOWING_UP: 'MOON_GLOWING_UP',
+      MOON_SHRINKING: 'MOON_SHRINKING',
+      CAMERA_PANNING: 'CAMERA_PANNING',
+      FIREWORKS_SHOW: 'FIREWORKS_SHOW',
+      FIREWORKS_PAUSE: 'FIREWORKS_PAUSE',
+      LOVE_FOREVER_BURST: 'LOVE_FOREVER_BURST',
+      ENDING_TEXT: 'ENDING_TEXT'
+    };
 
-        ctx.beginPath();
+    let currentState = STATES.INTRO_TYPING;
 
-        ctx.arc(
-            moon.x + c[0] * r,
-            moon.y + c[1] * r,
-            c[2] * r,
-            0,
-            Math.PI * 2
-        );
+    // DOM Elements
+    const canvas = document.getElementById('mainCanvas');
+    const ctx = canvas.getContext('2d');
+    const typewriterTextEl = document.getElementById('typewriterText');
+    const introScreenEl = document.getElementById('introScreen');
+    const cardModal = document.getElementById('cardModal');
+    const cardContainer = document.getElementById('cardContainer');
+    const cardTextEl = document.getElementById('cardText');
+    const cardFooter = document.getElementById('cardFooter');
+    const endingText1 = document.getElementById('endingText1');
+    const endingText2 = document.getElementById('endingText2');
 
-        ctx.fill();
+    // Canvas Dimensions & Camera Offset
+    let width, height;
+    let cameraOffsetY = 0;
+    let targetCameraOffsetY = 0;
+
+    function resize() {
+      width = canvas.width = window.innerWidth;
+      height = canvas.height = window.innerHeight;
     }
-
-    ctx.globalAlpha = 1;
-}
-
-
-/* =========================================================
-   MOON HOVER
-========================================================= */
-
-let mouseX = 0;
-let mouseY = 0;
-
-canvas.addEventListener("mousemove", e => {
-
-    mouseX = e.clientX;
-    mouseY = e.clientY;
-
-    if (
-        moon.hoverLocked ||
-        state === STATES.MOON_SHRINK ||
-        state === STATES.CAMERA ||
-        state === STATES.FIREWORKS ||
-        state === STATES.LOVE_FOREVER
-    ) {
-
-        moon.hover = false;
-        return;
-    }
-
-    if (
-        state === STATES.MOON_APPEAR ||
-        state === STATES.SKY ||
-        state === STATES.MOON_READY
-    ) {
-
-        const dx =
-            mouseX - moon.x;
-
-        const dy =
-            mouseY -
-            (moon.y + cameraOffsetY);
-
-        const distance =
-            Math.hypot(dx, dy);
-
-        moon.hover =
-            distance <
-            moon.radius * 1.35;
-    }
-});
-
-
-/* Smooth hover amount */
-
-function updateMoonHover(dt) {
-
-    const target =
-        moon.hover &&
-        !moon.hoverLocked
-            ? 1
-            : 0;
-
-    /*
-        Slow enough to feel like light
-        rather than a button animation.
-    */
-
-    moon.hoverAmount +=
-        (target - moon.hoverAmount) *
-        Math.min(1, dt * 5);
-}
-
-
-/* =========================================================
-   CARD
-========================================================= */
-
-const cardModal =
-    document.getElementById("cardModal");
-
-const cardText =
-    document.getElementById("cardText");
-
-const cardHint =
-    document.getElementById("cardHint");
-
-
-async function openCard(index) {
-
-    if (activeCard) return;
-
-    activeCard = true;
-
-    cardText.textContent = "";
-    cardHint.classList.remove("show");
-
-    cardModal.classList.add("open");
-
-    await sleep(650);
-
-    cardText.classList.add("type-cursor");
-
-    const message =
-        GREETINGS[index];
-
-    for (
-        let i = 0;
-        i <= message.length;
-        i++
-    ) {
-
-        if (!activeCard) return;
-
-        cardText.textContent =
-            message.substring(0, i);
-
-        await sleep(
-            message[i] === "\n"
-                ? 90
-                : random(28, 48)
-        );
-    }
-
-    /*
-        Cursor remains blinking
-        3–5 times.
-    */
-
-    await sleep(2400);
-
-    cardText.classList.remove(
-        "type-cursor"
-    );
-
-    cardHint.classList.add("show");
-}
-
-
-function closeCard() {
-
-    if (!activeCard) return;
-
-    activeCard = false;
-
-    cardModal.classList.remove("open");
-
-    /*
-        Only when the card is actually closed
-        do we increase the click count.
-    */
-
-    lanternClicks++;
-
-    if (lanternClicks >= LANTERN_LIMIT) {
-
-        state =
-            STATES.WAIT_LANTERNS;
-    }
-}
-
-
-cardModal.addEventListener("click", e => {
-
-    /*
-        Clicking outside the card closes it.
-    */
-
-    if (e.target === cardModal) {
-        closeCard();
-    }
-});
-
-
-/* =========================================================
-   CLICK HANDLER
-========================================================= */
-
-canvas.addEventListener("click", e => {
-
-    if (activeCard) return;
-
-    const x = e.clientX;
-
-    const y =
-        e.clientY -
-        cameraOffsetY;
-
-
-    /* -------------------------------------
-       FIRST MOON
-    ------------------------------------- */
-
-    if (
-        state === STATES.MOON_APPEAR ||
-        state === STATES.SKY
-    ) {
-
-        const d =
-            Math.hypot(
-                x - moon.x,
-                y - moon.y
-            );
-
-        if (
-            d <
-            moon.radius * 1.5
-        ) {
-
-            /*
-                Moon has been clicked.
-
-                From now on its hover effect
-                can NEVER return.
-            */
-
-            moon.hoverLocked = true;
-            moon.hover = false;
-            moon.hoverAmount = 0;
-
-            state = STATES.SKY;
-
-            return;
-        }
-    }
-
-
-    /* -------------------------------------
-       LANTERNS
-    ------------------------------------- */
-
-    if (state === STATES.SKY) {
-
-        for (
-            let i = lanterns.length - 1;
-            i >= 0;
-            i--
-        ) {
-
-            const l =
-                lanterns[i];
-
-            const d =
-                Math.hypot(
-                    x - l.x,
-                    y - l.y
-                );
-
-            if (
-                d <
-                l.size * .95
-            ) {
-
-                lanterns.splice(i, 1);
-
-                openCard(
-                    lanternClicks
-                );
-
-                return;
-            }
-        }
-    }
-
-
-    /* -------------------------------------
-       FINAL MOON
-    ------------------------------------- */
-
-    if (state === STATES.MOON_READY) {
-
-        const d =
-            Math.hypot(
-                x - moon.x,
-                y - moon.y
-            );
-
-        if (
-            d <
-            moon.radius * 1.5
-        ) {
-
-            moon.hoverLocked = true;
-
-            triggerOutro();
-
-            return;
-        }
-    }
-});
-
-
-/* =========================================================
-   FINAL MOON GLOW
-========================================================= */
-
-async function startMoonReady() {
-
-    state =
-        STATES.MOON_READY;
-
-    moon.glow = .25;
-
-    const startGlow =
-        moon.glow;
-
-    const start =
-        performance.now();
-
-    /*
-        Very slow final illumination.
-    */
-
-    await new Promise(resolve => {
-
-        function animate(now) {
-
-            const p =
-                clamp(
-                    (now - start) / 4800,
-                    0,
-                    1
-                );
-
-            const e =
-                easeInOut(p);
-
-            moon.glow =
-                lerp(
-                    startGlow,
-                    1,
-                    e
-                );
-
-            if (p < 1) {
-
-                requestAnimationFrame(
-                    animate
-                );
-
-            } else {
-
-                resolve();
-            }
+    window.addEventListener('resize', resize);
+    resize();
+
+    // World Elements Data Structures
+    let stars = [];
+    let lanterns = [];
+    let fireworks = [];
+    let particles = [];
+    let textParticles = [];
+
+    // Moon Properties
+    const moon = {
+      x: 0,
+      y: 0,
+      radius: 0,
+      targetRadius: 0,
+      opacity: 0,
+      glowOpacity: 0,
+      isAwake: false,
+      isHovered: false,
+      hoverLocked: false,
+      hoverAmount: 0
+    };
+
+    // --- INTRO TYPEWRITER LOGIC ---
+    const introLines = [
+      "25-9-2026",
+      "Rằm tháng 8 rồi đấy",
+      "Thế em bé đã có quà gì chưa",
+      "Tặng em bé một mặt trăng nhỏ nhé!"
+    ];
+
+    async function runIntroTypewriter() {
+      typewriterTextEl.classList.add('blinking-cursor');
+      
+      for (let i = 0; i < introLines.length; i++) {
+        const line = introLines[i];
+        
+        // Type line
+        for (let j = 0; j <= line.length; j++) {
+          typewriterTextEl.innerText = line.substring(0, j);
+          await sleep(70 + Math.random() * 40);
         }
 
-        requestAnimationFrame(
-            animate
-        );
-    });
-}
+        // Blink cursor x4
+        await sleep(1500);
 
-
-/* =========================================================
-   OUTRO
-========================================================= */
-
-async function triggerOutro() {
-
-    state =
-        STATES.MOON_SHRINK;
-
-    const startRadius =
-        moon.radius;
-
-    const endRadius = 8;
-
-    const start =
-        performance.now();
-
-    /*
-        Slow cinematic shrink.
-    */
-
-    await new Promise(resolve => {
-
-        function animate(now) {
-
-            const p =
-                clamp(
-                    (now - start) / 1800,
-                    0,
-                    1
-                );
-
-            const e =
-                easeInOut(p);
-
-            moon.radius =
-                lerp(
-                    startRadius,
-                    endRadius,
-                    e
-                );
-
-            moon.glow =
-                lerp(
-                    moon.glow,
-                    .15,
-                    e
-                );
-
-            if (p < 1) {
-
-                requestAnimationFrame(
-                    animate
-                );
-
-            } else {
-
-                resolve();
-            }
+        // Backspace if not the last line
+        if (i < introLines.length - 1) {
+          for (let j = line.length; j >= 0; j--) {
+            typewriterTextEl.innerText = line.substring(0, j);
+            await sleep(35);
+          }
+          await sleep(300);
         }
+      }
 
-        requestAnimationFrame(
-            animate
-        );
-    });
+      // Last line completed: hold cursor blink x4, then fade out intro text
+      await sleep(1200);
+      typewriterTextEl.classList.remove('blinking-cursor');
+      introScreenEl.style.opacity = '0';
+      
+      await sleep(1000);
+      introScreenEl.style.display = 'none';
 
+      // Transition to Dot Blinking
+      startDotSequence();
+    }
 
-    /* ORIGINAL 5 SECOND PAUSE */
+    function sleep(ms) {
+      return new Promise(resolve => setTimeout(resolve, ms));
+    }
 
-    await sleep(5000);
+    // --- MOON INITIALIZATION & AWAKENING ---
+    function startDotSequence() {
+      currentState = STATES.DOT_BLINKING;
+      moon.x = width / 2;
+      moon.y = height / 2;
+      moon.radius = 1.5;
+      moon.opacity = 0;
+      moon.hoverLocked = false;
+      moon.isHovered = false;
+      moon.hoverAmount = 0;
 
-
-    /* CAMERA */
-
-    state =
-        STATES.CAMERA;
-
-    targetCameraOffsetY =
-        -H * .28;
-
-    const cameraStart =
-        performance.now();
-
-    await new Promise(resolve => {
-
-        function animate(now) {
-
-            const p =
-                clamp(
-                    (now - cameraStart) / 3500,
-                    0,
-                    1
-                );
-
-            const e =
-                easeInOut(p);
-
-            cameraOffsetY =
-                targetCameraOffsetY * e;
-
-            if (p < 1) {
-
-                requestAnimationFrame(
-                    animate
-                );
-
-            } else {
-
-                resolve();
-            }
+      let blinkCount = 0;
+      const blinkInterval = setInterval(() => {
+        moon.opacity = moon.opacity === 0 ? 0.9 : 0;
+        blinkCount++;
+        if (blinkCount >= 6) { // 3 blinks
+          clearInterval(blinkInterval);
+          startMoonAwakening();
         }
+      }, 400);
+    }
 
-        requestAnimationFrame(
-            animate
-        );
-    });
+    function startMoonAwakening() {
+      currentState = STATES.MOON_AWAKENING;
+      moon.opacity = 1;
+      moon.targetRadius = Math.min(width, height) * 0.12;
+      if (moon.targetRadius < 45) moon.targetRadius = 45;
+      if (moon.targetRadius > 90) moon.targetRadius = 90;
 
+      // Expand Moon
+      let startTime = null;
+      function animateAwake(time) {
+        if (!startTime) startTime = time;
+        let progress = (time - startTime) / 5200;
+        if (progress > 1) progress = 1;
 
-    /* ORIGINAL 2 SECOND PAUSE */
+        // Slow cinematic expansion: gentle at the beginning and end.
+        const ease = 0.5 - Math.cos(progress * Math.PI) / 2;
+        moon.radius = 1.5 + (moon.targetRadius - 1.5) * ease;
+        moon.glowOpacity = ease * 0.8;
 
-    await sleep(2000);
+        if (progress < 1) {
+          requestAnimationFrame(animateAwake);
+        } else {
+          moon.isAwake = true;
+        }
+      }
+      requestAnimationFrame(animateAwake);
+    }
 
-
-    /* FIREWORKS */
-
-    startFireworks();
-}
-
-
-/* =========================================================
-   FIREWORKS
-   GIỮ NGUYÊN FLOW CUỐI
-========================================================= */
-
-let rockets = [];
-let particles = [];
-
-
-const FIREWORK_COLORS = [
-    "#fde047",
-    "#f43f5e",
-    "#38bdf8",
-    "#a855f7",
-    "#34d399",
-    "#fb923c"
-];
-
-
-function launchFirework() {
-
-    rockets.push({
-
-        x:
-            W * .2 +
-            Math.random() * W * .6,
-
-        y:
-            H -
-            cameraOffsetY,
-
-        targetY:
-            H * .15 +
-            Math.random() * H * .25 -
-            cameraOffsetY,
-
-        speed:
-            random(7, 10),
-
-        color:
-            FIREWORK_COLORS[
-                Math.floor(
-                    Math.random() *
-                    FIREWORK_COLORS.length
-                )
-            ]
-    });
-}
-
-
-function explode(x, y, color) {
-
-    const count = 60;
-
-    for (
-        let i = 0;
-        i < count;
-        i++
-    ) {
-
-        const angle =
-            (Math.PI * 2 / count) * i +
-            random(-.08, .08);
-
-        const speed =
-            random(2.2, 7);
-
-        particles.push({
-
-            x,
-            y,
-
-            vx:
-                Math.cos(angle) *
-                speed,
-
-            vy:
-                Math.sin(angle) *
-                speed,
-
-            gravity: .08,
-
-            drag: .985,
-
-            alpha: 1,
-
-            decay:
-                random(.009, .017),
-
-            color
+    // --- STARS & LANTERNS GENERATION ---
+    function initStars() {
+      stars = [];
+      const count = Math.floor((width * height) / 3000);
+      for (let i = 0; i < count; i++) {
+        stars.push({
+          x: Math.random() * width,
+          y: Math.random() * height * 1.5, // Cover extended canvas
+          size: Math.random() * 1.5 + 0.5,
+          alpha: Math.random() * 0.8 + 0.2,
+          twinkleSpeed: Math.random() * 0.02 + 0.005
         });
+      }
     }
-}
+    initStars();
 
+    function spawnLanterns() {
+      lanterns = [];
+      const totalLanterns = 18;
 
-function updateFireworks(dt) {
+      // Staggered chain: many lanterns, but each appears at a controlled
+      // interval and at a different lane so the stream feels continuous.
+      for (let i = 0; i < totalLanterns; i++) {
+        setTimeout(() => {
+          if (currentState === STATES.INTERACTIVE_SKY || currentState === STATES.WAITING_LANTERNS_CLEAR) {
+            lanterns.push(createLantern(i));
+          }
+        }, i * 760 + Math.random() * 180);
+      }
+    }
 
-    /* rockets */
+    function createLantern(index = 0) {
+      const scale = Math.random() * 0.30 + 0.70;
+      const laneCount = Math.max(7, Math.floor(width / 130));
+      const lane = index % laneCount;
+      const laneWidth = width / laneCount;
 
-    for (
-        let i = rockets.length - 1;
-        i >= 0;
-        i--
-    ) {
+      return {
+        // Fixed horizontal lane. No sine-wave sway.
+        x: lane * laneWidth + laneWidth * 0.5 + (Math.random() - 0.5) * Math.min(18, laneWidth * 0.12),
+        y: height + 50 + Math.floor(index / laneCount) * 115 + Math.random() * 45,
+        speedY: Math.random() * 0.30 + 0.65,
+        scale: scale,
+        opacity: Math.random() * 0.22 + 0.68,
+        size: 25 * scale,
+        hitRadius: 25 * scale,
+        index: index
+      };
+    }
 
-        const r =
-            rockets[i];
+    // --- CARD TYPING & INTERACTION ---
+    async function openGreetingCard(index) {
+      activeCardOpen = true;
+      cardModal.classList.remove('pointer-events-none');
+      cardModal.classList.remove('opacity-0');
+      cardContainer.classList.remove('scale-95');
+      cardContainer.classList.add('scale-100');
+      cardFooter.classList.add('opacity-0');
+      cardTextEl.innerText = '';
+      cardTextEl.classList.add('blinking-cursor');
 
-        r.y -= r.speed;
+      const text = GREETINGS[index];
+      await sleep(400);
 
-        ctx.strokeStyle =
-            r.color;
+      for (let i = 0; i <= text.length; i++) {
+        if (!activeCardOpen) break;
+        cardTextEl.innerText = text.substring(0, i);
+        await sleep(35 + Math.random() * 20);
+      }
 
-        ctx.globalAlpha = .75;
+      await sleep(600);
+      cardTextEl.classList.remove('blinking-cursor');
+      cardFooter.classList.remove('opacity-0');
+    }
 
-        ctx.lineWidth = 1.4;
+    function closeGreetingCard() {
+      if (!activeCardOpen) return;
+      activeCardOpen = false;
+      cardModal.classList.add('opacity-0');
+      cardModal.classList.add('pointer-events-none');
+      cardContainer.classList.remove('scale-100');
+      cardContainer.classList.add('scale-95');
 
+      // Increment click state cleanly
+      lanternClicks++;
+
+      // If clicked 3 lanterns, progress state after card closes
+      if (lanternClicks >= LANTERN_LIMIT) {
+        currentState = STATES.WAITING_LANTERNS_CLEAR;
+      }
+    }
+
+    cardModal.addEventListener('click', (e) => {
+      // Close card on clicking anywhere
+      closeGreetingCard();
+    });
+
+    // --- EVENT LISTENERS (MOUSE/TOUCH) ---
+    canvas.addEventListener('mousemove', (e) => {
+      const rect = canvas.getBoundingClientRect();
+      const mouseX = e.clientX - rect.left;
+      const mouseY = e.clientY - rect.top - cameraOffsetY;
+
+      if (!moon.hoverLocked && (currentState === STATES.MOON_AWAKENING || currentState === STATES.INTERACTIVE_SKY || currentState === STATES.MOON_GLOWING_UP)) {
+        const dist = Math.hypot(mouseX - moon.x, mouseY - moon.y);
+        moon.isHovered = dist < moon.radius * 1.3;
+      } else if (moon.hoverLocked) {
+        moon.isHovered = false;
+      }
+    });
+
+    canvas.addEventListener('click', (e) => {
+      if (activeCardOpen) return;
+
+      const rect = canvas.getBoundingClientRect();
+      const mouseX = e.clientX - rect.left;
+      const mouseY = e.clientY - rect.top - cameraOffsetY;
+
+      // Click Moon in AWAKENING state -> Enter INTERACTIVE_SKY
+      if (currentState === STATES.MOON_AWAKENING) {
+        const dist = Math.hypot(mouseX - moon.x, mouseY - moon.y);
+        if (dist < moon.radius * 1.5) {
+          moon.hoverLocked = true;
+          moon.isHovered = false;
+          currentState = STATES.INTERACTIVE_SKY;
+          spawnLanterns();
+        }
+      } 
+      // Click Lanterns
+      else if (currentState === STATES.INTERACTIVE_SKY) {
+        for (let i = lanterns.length - 1; i >= 0; i--) {
+          const l = lanterns[i];
+          const dist = Math.hypot(mouseX - l.x, mouseY - l.y);
+          if (dist < l.size * 1.5) {
+            // Remove clicked lantern and trigger card
+            lanterns.splice(i, 1);
+            openGreetingCard(lanternClicks);
+            break;
+          }
+        }
+      }
+      // Click Moon when ready for Outro (State MOON_GLOWING_UP)
+      else if (currentState === STATES.MOON_GLOWING_UP) {
+        const dist = Math.hypot(mouseX - moon.x, mouseY - moon.y);
+        if (dist < moon.radius * 1.5) {
+          moon.hoverLocked = true;
+          moon.isHovered = false;
+          triggerOutroSequence();
+        }
+      }
+    });
+
+    // --- OUTRO SEQUENCE TRANSITIONS ---
+    async function triggerOutroSequence() {
+      currentState = STATES.MOON_SHRINKING;
+
+      // Fast-settle shrink animation
+      const startR = moon.radius;
+      const targetR = 8;
+      let startTime = null;
+
+      await new Promise(resolve => {
+        function shrink(time) {
+          if (!startTime) startTime = time;
+          let p = (time - startTime) / 1800; // Calm 1.8s
+          if (p > 1) p = 1;
+          const ease = 0.5 - Math.cos(p * Math.PI) / 2;
+          moon.radius = startR - (startR - targetR) * ease;
+          if (p < 1) requestAnimationFrame(shrink);
+          else resolve();
+        }
+        requestAnimationFrame(shrink);
+      });
+
+      // Pause 5s silently
+      await sleep(5000);
+
+      // Camera pan down 1/3 height
+      currentState = STATES.CAMERA_PANNING;
+      targetCameraOffsetY = -height * 0.28;
+      
+      let panStartTime = null;
+      await new Promise(resolve => {
+        function pan(time) {
+          if (!panStartTime) panStartTime = time;
+          let p = (time - panStartTime) / 3500; // Smooth 3.5s pan
+          if (p > 1) p = 1;
+          const ease = 0.5 - Math.cos(p * Math.PI) / 2; // Ease in-out
+          cameraOffsetY = targetCameraOffsetY * ease;
+          if (p < 1) requestAnimationFrame(pan);
+          else resolve();
+        }
+        requestAnimationFrame(pan);
+      });
+
+      // Pause 2s showing silhouettes
+      await sleep(2000);
+
+      // Start 10s Fireworks Show
+      currentState = STATES.FIREWORKS_SHOW;
+      const fireworkInterval = setInterval(() => {
+        if (currentState === STATES.FIREWORKS_SHOW) {
+          launchRandomFirework();
+        }
+      }, 700);
+
+      await sleep(10000);
+      clearInterval(fireworkInterval);
+
+      // 3s Quiet Pause
+      currentState = STATES.FIREWORKS_PAUSE;
+      await sleep(3000);
+
+      // Love Forever Grand Burst
+      currentState = STATES.LOVE_FOREVER_BURST;
+      launchLoveForeverBurst();
+
+      await sleep(5000);
+
+      // Ending Screen Fade In
+      currentState = STATES.ENDING_TEXT;
+      endingText1.style.opacity = '1';
+      await sleep(3000);
+      endingText1.style.opacity = '0';
+      await sleep(1500);
+      endingText2.style.opacity = '1';
+    }
+
+    // --- FIREWORKS & PARTICLE PHYSICS ---
+    function launchRandomFirework() {
+      const startX = width * 0.2 + Math.random() * width * 0.6;
+      const targetY = height * 0.15 + Math.random() * height * 0.25 - cameraOffsetY;
+      const colors = ['#fde047', '#f43f5e', '#38bdf8', '#a855f7', '#34d399', '#fb923c'];
+      
+      fireworks.push({
+        x: startX,
+        y: height - cameraOffsetY,
+        targetY: targetY,
+        speed: Math.random() * 3 + 7,
+        color: colors[Math.floor(Math.random() * colors.length)],
+        exploded: false
+      });
+    }
+
+    function createExplosion(x, y, color) {
+      const particleCount = 60;
+      for (let i = 0; i < particleCount; i++) {
+        const angle = (Math.PI * 2 / particleCount) * i + Math.random() * 0.2;
+        const speed = Math.random() * 5 + 2;
+        particles.push({
+          x: x,
+          y: y,
+          vx: Math.cos(angle) * speed,
+          vy: Math.sin(angle) * speed,
+          color: color,
+          alpha: 1,
+          decay: Math.random() * 0.015 + 0.01,
+          gravity: 0.08
+        });
+      }
+    }
+
+    function launchLoveForeverBurst() {
+      // Launch multiple rockets in unison
+      for (let i = -3; i <= 3; i++) {
+        fireworks.push({
+          x: width / 2 + i * 40,
+          y: height - cameraOffsetY,
+          targetY: height * 0.22 - cameraOffsetY,
+          speed: 9,
+          color: '#fef08a',
+          exploded: false,
+          isTextRocket: i === 0
+        });
+      }
+    }
+
+    function createTextParticles(cx, cy) {
+      // Offscreen canvas to sample text "LOVE FOREVER"
+      const tCanvas = document.createElement('canvas');
+      const tCtx = tCanvas.getContext('2d');
+      tCanvas.width = 800;
+      tCanvas.height = 200;
+      
+      tCtx.fillStyle = '#ffffff';
+      tCtx.font = 'bold 70px "Quicksand", sans-serif';
+      tCtx.textAlign = 'center';
+      tCtx.textBaseline = 'middle';
+      tCtx.fillText('LOVE FOREVER', 400, 100);
+
+      const imgData = tCtx.getImageData(0, 0, 800, 200);
+      const data = imgData.data;
+
+      // Sample pixels to form particles
+      const step = 6;
+      for (let y = 0; y < 200; y += step) {
+        for (let x = 0; x < 800; x += step) {
+          const index = (y * 800 + x) * 4;
+          if (data[index + 3] > 128) {
+            const px = cx + (x - 400) * (width < 640 ? 0.75 : 1.1);
+            const py = cy + (y - 100) * (width < 640 ? 0.75 : 1.1);
+            
+            particles.push({
+              x: cx,
+              y: cy,
+              targetX: px,
+              targetY: py,
+              vx: (px - cx) * 0.08 + (Math.random() - 0.5) * 2,
+              vy: (py - cy) * 0.08 + (Math.random() - 0.5) * 2,
+              color: '#fef08a',
+              alpha: 1,
+              decay: 0.006,
+              gravity: 0.015,
+              isText: true
+            });
+          }
+        }
+      }
+    }
+
+    // --- MAIN RENDER LOOP ---
+    function render(timestamp) {
+      ctx.clearRect(0, 0, width, height);
+
+      // Save context for camera pan
+      ctx.save();
+      ctx.translate(0, cameraOffsetY);
+
+      // 1. Draw Stars
+      for (let s of stars) {
+        s.alpha += Math.sin(timestamp * s.twinkleSpeed) * 0.01;
+        ctx.fillStyle = `rgba(255, 255, 255, ${Math.max(0.1, Math.min(1, s.alpha))})`;
         ctx.beginPath();
+        ctx.arc(s.x, s.y, s.size, 0, Math.PI * 2);
+        ctx.fill();
+      }
 
-        ctx.moveTo(
-            r.x,
-            r.y + 14
+      // 2. Draw Moon
+      if (moon.opacity > 0) {
+        ctx.save();
+        
+        // Smooth hover dynamics. The state is locked permanently after clicking.
+        const hoverTarget = (!moon.hoverLocked && moon.isHovered) ? 1 : 0;
+        moon.hoverAmount = (moon.hoverAmount || 0) + (hoverTarget - (moon.hoverAmount || 0)) * 0.08;
+        const currentR = moon.radius * (1 + moon.hoverAmount * 0.08);
+
+        // Moon Glow
+        const glowRadius = currentR * (currentState === STATES.MOON_GLOWING_UP ? 3.5 : 2.2) * (1 + moon.hoverAmount * 0.18);
+        const glowGradient = ctx.createRadialGradient(moon.x, moon.y, currentR * 0.5, moon.x, moon.y, glowRadius);
+        const hoverGlow = moon.hoverAmount * 0.18;
+        glowGradient.addColorStop(0, `rgba(254, 240, 138, ${moon.glowOpacity + hoverGlow})`);
+        glowGradient.addColorStop(0.5, `rgba(253, 224, 71, ${(moon.glowOpacity + hoverGlow) * 0.3})`);
+        glowGradient.addColorStop(1, 'rgba(0, 0, 0, 0)');
+
+        ctx.fillStyle = glowGradient;
+        ctx.beginPath();
+        ctx.arc(moon.x, moon.y, glowRadius, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Moon Solid
+        const moonGradient = ctx.createRadialGradient(
+          moon.x - currentR * 0.3, 
+          moon.y - currentR * 0.3, 
+          currentR * 0.1, 
+          moon.x, 
+          moon.y, 
+          currentR
         );
+        moonGradient.addColorStop(0, '#ffffff');
+        moonGradient.addColorStop(0.75, '#fef08a');
+        moonGradient.addColorStop(1, '#fde047');
 
-        ctx.lineTo(
-            r.x,
-            r.y
-        );
+        ctx.fillStyle = moonGradient;
+        ctx.globalAlpha = moon.opacity;
+        ctx.beginPath();
+        ctx.arc(moon.x, moon.y, currentR, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.restore();
+      }
 
+      // 3. Draw Lanterns
+      if (currentState === STATES.INTERACTIVE_SKY || currentState === STATES.WAITING_LANTERNS_CLEAR) {
+        for (let i = lanterns.length - 1; i >= 0; i--) {
+          const l = lanterns[i];
+          // Calm vertical drift only: no horizontal wobble, no rotation.
+          l.y -= l.speedY;
+
+          // Render Lantern
+          ctx.save();
+          ctx.globalAlpha = l.opacity;
+          ctx.translate(l.x, l.y);
+
+          // Lantern Glow
+          const lGlow = ctx.createRadialGradient(0, 0, 2, 0, 0, l.size * 1.8);
+          lGlow.addColorStop(0, 'rgba(251, 146, 60, 0.8)');
+          lGlow.addColorStop(1, 'rgba(0, 0, 0, 0)');
+          ctx.fillStyle = lGlow;
+          ctx.beginPath();
+          ctx.arc(0, 0, l.size * 1.8, 0, Math.PI * 2);
+          ctx.fill();
+
+          // Lantern Body
+          ctx.fillStyle = '#f97316';
+          ctx.beginPath();
+          ctx.roundRect(-l.size * 0.5, -l.size * 0.65, l.size, l.size * 1.3, 6);
+          ctx.fill();
+
+          // Inner Light
+          ctx.fillStyle = '#fef08a';
+          ctx.beginPath();
+          ctx.arc(0, 0, l.size * 0.3, 0, Math.PI * 2);
+          ctx.fill();
+
+          ctx.restore();
+
+          // Recycle/Remove offscreen lanterns
+          if (l.y < -60) {
+            if (currentState === STATES.INTERACTIVE_SKY) {
+              // Reuse the same horizontal lane and send it far below the screen.
+              l.y = height + 160 + (l.index % 5) * 55;
+            } else {
+              lanterns.splice(i, 1);
+            }
+          }
+        }
+
+        // Check if all lanterns cleared in WAITING state
+        if (currentState === STATES.WAITING_LANTERNS_CLEAR && lanterns.length === 0) {
+          currentState = STATES.MOON_GLOWING_UP;
+          moon.glowOpacity = 0.18;
+          const glowStart = performance.now();
+          (function easeFinalMoonGlow() {
+            const p = Math.min(1, (performance.now() - glowStart) / 4200);
+            moon.glowOpacity = 0.18 + (1 - 0.18) * (0.5 - Math.cos(p * Math.PI) / 2);
+            if (p < 1 && currentState === STATES.MOON_GLOWING_UP) requestAnimationFrame(easeFinalMoonGlow);
+          })();
+        }
+      }
+
+      // 4. Draw Fireworks & Particles
+      for (let i = fireworks.length - 1; i >= 0; i--) {
+        const fw = fireworks[i];
+        fw.y -= fw.speed;
+
+        ctx.strokeStyle = fw.color;
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.moveTo(fw.x, fw.y + 10);
+        ctx.lineTo(fw.x, fw.y);
         ctx.stroke();
 
-        if (
-            r.y <= r.targetY
-        ) {
-
-            explode(
-                r.x,
-                r.y,
-                r.color
-            );
-
-            rockets.splice(i, 1);
+        if (fw.y <= fw.targetY) {
+          if (fw.isTextRocket) {
+            createTextParticles(fw.x, fw.y);
+          } else {
+            createExplosion(fw.x, fw.y, fw.color);
+          }
+          fireworks.splice(i, 1);
         }
-    }
+      }
 
-
-    /* particles */
-
-    for (
-        let i = particles.length - 1;
-        i >= 0;
-        i--
-    ) {
-
-        const p =
-            particles[i];
-
-        p.vx *= p.drag;
-        p.vy *= p.drag;
-
+      for (let i = particles.length - 1; i >= 0; i--) {
+        const p = particles[i];
         p.x += p.vx;
         p.y += p.vy;
-
         p.vy += p.gravity;
-
         p.alpha -= p.decay;
 
+        ctx.fillStyle = p.color;
+        ctx.globalAlpha = Math.max(0, p.alpha);
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, p.isText ? 1.8 : 2.2, 0, Math.PI * 2);
+        ctx.fill();
+
         if (p.alpha <= 0) {
-
-            particles.splice(i, 1);
-
-            continue;
+          particles.splice(i, 1);
         }
+      }
 
-        ctx.globalAlpha =
-            p.alpha;
+      // 5. Draw Silhouettes (Revealed after camera pan)
+      if (cameraOffsetY < 0) {
+        ctx.save();
+        const baseGroundY = height + Math.abs(targetCameraOffsetY) - 10;
 
-        ctx.fillStyle =
-            p.color;
-
+        // Hill slope
+        ctx.fillStyle = '#020617';
         ctx.beginPath();
-
-        ctx.arc(
-            p.x,
-            p.y,
-            1.7,
-            0,
-            Math.PI * 2
-        );
-
+        ctx.ellipse(width / 2, baseGroundY + 120, width * 0.7, 160, 0, Math.PI, 0);
         ctx.fill();
-    }
 
-    ctx.globalAlpha = 1;
-}
+        // Two Silhouettes Sitting Together
+        const centerX = width / 2;
+        const groundY = baseGroundY - 20;
 
+        ctx.fillStyle = '#090d16';
 
-/* =========================================================
-   LOVE FOREVER
-========================================================= */
-
-function createLoveTextParticles(cx, cy) {
-
-    const off =
-        document.createElement("canvas");
-
-    off.width = 900;
-    off.height = 220;
-
-    const c =
-        off.getContext("2d");
-
-    c.fillStyle = "white";
-
-    c.font =
-        "bold 78px Quicksand";
-
-    c.textAlign = "center";
-    c.textBaseline = "middle";
-
-    c.fillText(
-        "LOVE FOREVER",
-        450,
-        110
-    );
-
-    const data =
-        c.getImageData(
-            0,
-            0,
-            900,
-            220
-        ).data;
-
-    const step = 6;
-
-    for (
-        let y = 0;
-        y < 220;
-        y += step
-    ) {
-
-        for (
-            let x = 0;
-            x < 900;
-            x += step
-        ) {
-
-            const index =
-                (y * 900 + x) * 4;
-
-            if (
-                data[index + 3] >
-                150
-            ) {
-
-                const targetX =
-                    cx +
-                    (x - 450) *
-                    (W < 650 ? .72 : 1);
-
-                const targetY =
-                    cy +
-                    (y - 110) *
-                    (W < 650 ? .72 : 1);
-
-                particles.push({
-
-                    x: cx,
-                    y: cy,
-
-                    vx:
-                        random(-2, 2),
-
-                    vy:
-                        random(-2, 2),
-
-                    targetX,
-                    targetY,
-
-                    alpha: 1,
-
-                    decay: .004,
-
-                    color:
-                        "#fef08a",
-
-                    isText: true
-                });
-            }
-        }
-    }
-}
-
-
-function updateLoveParticles() {
-
-    for (
-        let i = particles.length - 1;
-        i >= 0;
-        i--
-    ) {
-
-        const p =
-            particles[i];
-
-        if (p.isText) {
-
-            p.x +=
-                (p.targetX - p.x) *
-                .065;
-
-            p.y +=
-                (p.targetY - p.y) *
-                .065;
-
-            p.alpha -=
-                p.decay;
-
-        } else {
-
-            p.vx *= .985;
-
-            p.x += p.vx;
-
-            p.y += p.vy;
-
-            p.vy += .08;
-
-            p.alpha -=
-                p.decay;
-        }
-
-        if (
-            p.alpha <= 0
-        ) {
-
-            particles.splice(i, 1);
-
-            continue;
-        }
-
-        ctx.globalAlpha =
-            p.alpha;
-
-        ctx.fillStyle =
-            p.color;
-
+        // Person 1 (Left - Head & Torso leaning right)
         ctx.beginPath();
-
-        ctx.arc(
-            p.x,
-            p.y,
-            p.isText ? 1.8 : 1.7,
-            0,
-            Math.PI * 2
-        );
-
+        ctx.arc(centerX - 16, groundY - 42, 10, 0, Math.PI * 2); // Head
         ctx.fill();
-    }
-
-    ctx.globalAlpha = 1;
-}
-
-
-/* =========================================================
-   SILHOUETTES
-   GIỮ NGUYÊN PHONG CÁCH ĐOẠN CUỐI
-========================================================= */
-
-function drawSilhouettes() {
-
-    if (
-        cameraOffsetY >= -20
-    ) return;
-
-    const baseGroundY =
-        H +
-        Math.abs(
-            targetCameraOffsetY
-        ) -
-        10;
-
-    ctx.save();
-
-    /* hill */
-
-    ctx.fillStyle =
-        "rgba(1,4,10,.94)";
-
-    ctx.beginPath();
-
-    ctx.ellipse(
-        W * .5,
-        baseGroundY,
-        W * .72,
-        H * .20,
-        0,
-        Math.PI,
-        0
-    );
-
-    ctx.fill();
-
-
-    const groundY =
-        baseGroundY - 20;
-
-    const cx =
-        W * .5;
-
-    const scale =
-        clamp(
-            W / 900,
-            .62,
-            1
-        );
-
-
-    ctx.fillStyle =
-        "#02040a";
-
-    ctx.strokeStyle =
-        "#02040a";
-
-    ctx.lineCap =
-        "round";
-
-
-    /* Person 1 */
-
-    ctx.beginPath();
-
-    ctx.arc(
-        cx - 27 * scale,
-        groundY - 73 * scale,
-        13 * scale,
-        0,
-        Math.PI * 2
-    );
-
-    ctx.fill();
-
-
-    ctx.beginPath();
-
-    ctx.ellipse(
-        cx - 28 * scale,
-        groundY - 40 * scale,
-        19 * scale,
-        30 * scale,
-        -.08,
-        0,
-        Math.PI * 2
-    );
-
-    ctx.fill();
-
-
-    /* Person 2 */
-
-    ctx.beginPath();
-
-    ctx.arc(
-        cx + 25 * scale,
-        groundY - 70 * scale,
-        12 * scale,
-        0,
-        Math.PI * 2
-    );
-
-    ctx.fill();
-
-
-    ctx.beginPath();
-
-    ctx.ellipse(
-        cx + 27 * scale,
-        groundY - 38 * scale,
-        18 * scale,
-        29 * scale,
-        .08,
-        0,
-        Math.PI * 2
-    );
-
-    ctx.fill();
-
-
-    /* connected shoulders */
-
-    ctx.lineWidth =
-        14 * scale;
-
-    ctx.beginPath();
-
-    ctx.moveTo(
-        cx - 15 * scale,
-        groundY - 57 * scale
-    );
-
-    ctx.quadraticCurveTo(
-        cx,
-        groundY - 66 * scale,
-        cx + 14 * scale,
-        groundY - 55 * scale
-    );
-
-    ctx.stroke();
-
-
-    /* legs */
-
-    ctx.lineWidth =
-        11 * scale;
-
-
-    ctx.beginPath();
-
-    ctx.moveTo(
-        cx - 35 * scale,
-        groundY - 16 * scale
-    );
-
-    ctx.lineTo(
-        cx - 54 * scale,
-        groundY + 5 * scale
-    );
-
-    ctx.stroke();
-
-
-    ctx.beginPath();
-
-    ctx.moveTo(
-        cx - 21 * scale,
-        groundY - 15 * scale
-    );
-
-    ctx.lineTo(
-        cx - 4 * scale,
-        groundY + 6 * scale
-    );
-
-    ctx.stroke();
-
-
-    ctx.beginPath();
-
-    ctx.moveTo(
-        cx + 17 * scale,
-        groundY - 14 * scale
-    );
-
-    ctx.lineTo(
-        cx + 2 * scale,
-        groundY + 7 * scale
-    );
-
-    ctx.stroke();
-
-
-    ctx.beginPath();
-
-    ctx.moveTo(
-        cx + 34 * scale,
-        groundY - 15 * scale
-    );
-
-    ctx.lineTo(
-        cx + 52 * scale,
-        groundY + 6 * scale
-    );
-
-    ctx.stroke();
-
-
-    ctx.restore();
-}
-
-
-/* =========================================================
-   START FIREWORKS
-========================================================= */
-
-async function startFireworks() {
-
-    state =
-        STATES.FIREWORKS;
-
-    const interval =
-        setInterval(() => {
-
-            if (
-                state === STATES.FIREWORKS
-            ) {
-
-                launchFirework();
-            }
-
-        }, 700);
-
-
-    /* 10 SECOND SHOW */
-
-    await sleep(10000);
-
-    clearInterval(interval);
-
-    state =
-        STATES.FIREWORKS_PAUSE;
-
-
-    /*
-        Stop launching.
-        Existing particles naturally fade.
-    */
-
-    await sleep(3000);
-
-
-    state =
-        STATES.LOVE_FOREVER;
-
-
-    /*
-        Several rockets rise together.
-    */
-
-    for (
-        let i = -3;
-        i <= 3;
-        i++
-    ) {
-
-        setTimeout(() => {
-
-            rockets.push({
-
-                x:
-                    W / 2 +
-                    i * 42,
-
-                y:
-                    H -
-                    cameraOffsetY,
-
-                targetY:
-                    H * .22 -
-                    cameraOffsetY,
-
-                speed: 9,
-
-                color:
-                    "#fef08a",
-
-                isLove:
-                    true
-            });
-
-        }, Math.abs(i) * 80);
-    }
-
-
-    /*
-        Wait for rockets to reach sky,
-        then form LOVE FOREVER.
-    */
-
-    setTimeout(() => {
-
-        const cx =
-            W / 2;
-
-        const cy =
-            H * .22 -
-            cameraOffsetY;
-
-        createLoveTextParticles(
-            cx,
-            cy
-        );
-
-    }, 1500);
-
-
-    await sleep(5500);
-
-
-    /* ENDING */
-
-    state =
-        STATES.ENDING;
-
-    const ending =
-        document.getElementById(
-            "ending"
-        );
-
-    const ending1 =
-        document.getElementById(
-            "ending1"
-        );
-
-    const ending2 =
-        document.getElementById(
-            "ending2"
-        );
-
-    ending.style.opacity = "1";
-
-    ending1.style.transition =
-        "opacity 1800ms ease";
-
-    ending1.style.opacity = "1";
-
-    await sleep(3600);
-
-    ending1.style.opacity = "0";
-
-    await sleep(1700);
-
-    ending2.style.transition =
-        "opacity 1800ms ease";
-
-    ending2.style.opacity = "1";
-
-    await sleep(4500);
-
-    ending2.style.opacity = "0";
-}
-
-
-/* =========================================================
-   RENDER
-========================================================= */
-
-let lastTime =
-    performance.now();
-
-function render(now) {
-
-    const dt =
-        Math.min(
-            (now - lastTime) / 1000,
-            .033
-        );
-
-    lastTime = now;
-
-
-    /* background */
-
-    const gradient =
-        ctx.createLinearGradient(
-            0,
-            0,
-            0,
-            H
-        );
-
-    gradient.addColorStop(
-        0,
-        "#02030a"
-    );
-
-    gradient.addColorStop(
-        .55,
-        "#050817"
-    );
-
-    gradient.addColorStop(
-        1,
-        "#010207"
-    );
-
-    ctx.fillStyle =
-        gradient;
-
-    ctx.fillRect(
-        0,
-        0,
-        W,
-        H
-    );
-
-
-    /* CAMERA WORLD */
-
-    ctx.save();
-
-    ctx.translate(
-        0,
-        cameraOffsetY
-    );
-
-
-    /* stars */
-
-    for (const s of stars) {
-
-        const twinkle =
-            .72 +
-            Math.sin(
-                now * .001 * s.twinkle +
-                s.phase
-            ) * .22;
-
-        ctx.globalAlpha =
-            s.alpha * twinkle;
-
-        ctx.fillStyle =
-            "#fff";
-
         ctx.beginPath();
-
-        ctx.arc(
-            s.x,
-            s.y,
-            s.radius,
-            0,
-            Math.PI * 2
-        );
-
+        ctx.ellipse(centerX - 14, groundY - 18, 14, 22, 0.15, 0, Math.PI * 2); // Body
         ctx.fill();
+
+        // Person 2 (Right - Head leaning on Person 1 shoulder)
+        ctx.beginPath();
+        ctx.arc(centerX + 6, groundY - 38, 9, 0, Math.PI * 2); // Head
+        ctx.fill();
+        ctx.beginPath();
+        ctx.ellipse(centerX + 8, groundY - 16, 13, 20, -0.1, 0, Math.PI * 2); // Body
+        ctx.fill();
+
+        ctx.restore();
+      }
+
+      ctx.restore();
+      requestAnimationFrame(render);
     }
 
-    ctx.globalAlpha = 1;
-
-
-    /* moon */
-
-    drawMoon();
-
-
-    /* lanterns */
-
-    if (
-        state === STATES.SKY ||
-        state === STATES.WAIT_LANTERNS
-    ) {
-
-        updateLanterns(dt);
-    }
-
-
-    /* silhouettes */
-
-    drawSilhouettes();
-
-
-    /* fireworks */
-
-    if (
-        state === STATES.FIREWORKS ||
-        state === STATES.FIREWORKS_PAUSE
-    ) {
-
-        updateFireworks(dt);
-    }
-
-
-    if (
-        state === STATES.LOVE_FOREVER
-    ) {
-
-        /*
-            Existing rockets still need
-            to travel upward.
-        */
-
-        for (
-            let i = rockets.length - 1;
-            i >= 0;
-            i--
-        ) {
-
-            const r =
-                rockets[i];
-
-            r.y -= r.speed;
-
-            ctx.globalAlpha = .8;
-
-            ctx.strokeStyle =
-                r.color;
-
-            ctx.lineWidth = 1.5;
-
-            ctx.beginPath();
-
-            ctx.moveTo(
-                r.x,
-                r.y + 15
-            );
-
-            ctx.lineTo(
-                r.x,
-                r.y
-            );
-
-            ctx.stroke();
-
-            if (
-                r.y <= r.targetY
-            ) {
-
-                explode(
-                    r.x,
-                    r.y,
-                    r.color
-                );
-
-                rockets.splice(
-                    i,
-                    1
-                );
-            }
-        }
-
-        updateLoveParticles();
-    }
-
-
-    ctx.restore();
-
-
-    updateMoonHover(dt);
-
-
-    requestAnimationFrame(
-        render
-    );
-}
-
-
-/* =========================================================
-   RESET FUNCTION
-========================================================= */
-
-function resetToIntro() {
-
-    /*
-        This is the required reset:
-
-        lanternClicks = 0
-    */
-
-    lanternClicks = 0;
-
-    lanterns = [];
-    rockets = [];
-    particles = [];
-
-    cameraOffsetY = 0;
-    targetCameraOffsetY = 0;
-
-    document.getElementById(
-        "intro"
-    ).style.display = "flex";
-
-    document.getElementById(
-        "intro"
-    ).style.opacity = "1";
-
-    cardModal.classList.remove(
-        "open"
-    );
-
-    activeCard = false;
-
-    runIntro();
-}
-
-
-/* =========================================================
-   INITIALIZE
-========================================================= */
-
-resize();
-
-resetMoon();
-
-runIntro();
-
-requestAnimationFrame(
-    render
-);
-
-</script>
-
+    // Start App Sequence
+    window.onload = () => {
+      runIntroTypewriter();
+      requestAnimationFrame(render);
+    };
+  </script>
 </body>
 </html>
-```
