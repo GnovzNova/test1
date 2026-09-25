@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Test 🌕✨</title>
+  <title>Tặng Em Bé Mặt Trăng Nhỏ 🌕✨</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Dancing+Script:wght@600;700&family=Quicksand:wght@400;500;600;700&display=swap');
@@ -130,7 +130,19 @@
 
     // DOM Elements
     const canvas = document.getElementById('mainCanvas');
-    const ctx = canvas.getContext('2d');
+    const ctx = canvas.getContext('2d', { alpha: true });
+    // Separate trail layer, mirroring the reference firework renderer.
+    const trailCanvas = document.createElement('canvas');
+    trailCanvas.id = 'fireworkTrails';
+    trailCanvas.setAttribute('aria-hidden', 'true');
+    trailCanvas.style.position = 'absolute';
+    trailCanvas.style.inset = '0';
+    trailCanvas.style.width = '100%';
+    trailCanvas.style.height = '100%';
+    trailCanvas.style.zIndex = '0';
+    trailCanvas.style.pointerEvents = 'none';
+    document.body.insertBefore(trailCanvas, canvas);
+    const trailsCtx = trailCanvas.getContext('2d', { alpha: true });
     const typewriterTextEl = document.getElementById('typewriterText');
     const introScreenEl = document.getElementById('introScreen');
     const cardModal = document.getElementById('cardModal');
@@ -142,12 +154,21 @@
 
     // Canvas Dimensions & Camera Offset
     let width, height;
+    let stageW = 0, stageH = 0;
     let cameraOffsetY = 0;
     let targetCameraOffsetY = 0;
 
     function resize() {
-      width = canvas.width = window.innerWidth;
-      height = canvas.height = window.innerHeight;
+      width = window.innerWidth;
+      height = window.innerHeight;
+      canvas.width = width;
+      canvas.height = height;
+      trailCanvas.width = width;
+      trailCanvas.height = height;
+      trailCanvas.style.width = width + 'px';
+      trailCanvas.style.height = height + 'px';
+      stageW = width;
+      stageH = height;
     }
     window.addEventListener('resize', resize);
     resize();
@@ -478,13 +499,12 @@
       // Pause 2s showing silhouettes
       await sleep(2000);
 
-      // Start 10s Fireworks Show
+      // Start 10s automatic fireworks show. No pointer event launches fireworks.
       currentState = STATES.FIREWORKS_SHOW;
-      const fireworkInterval = setInterval(() => {
-        if (currentState === STATES.FIREWORKS_SHOW) {
-          launchRandomFirework();
-        }
-      }, 700);
+      particles.length = 0;
+      clearFireworkEngine();
+      fireworkShowTick();
+      const fireworkInterval = setInterval(fireworkShowTick, 760);
 
       await sleep(10000);
       clearInterval(fireworkInterval);
@@ -495,6 +515,8 @@
 
       // Love Forever Grand Burst
       currentState = STATES.LOVE_FOREVER_BURST;
+      particles.length = 0;
+      clearFireworkEngine();
       launchLoveForeverBurst();
 
       await sleep(5000);
@@ -508,110 +530,805 @@
       endingText2.style.opacity = '1';
     }
 
-    // --- FIREWORKS & PARTICLE PHYSICS ---
-    function launchRandomFirework() {
-      const startX = width * 0.2 + Math.random() * width * 0.6;
-      const targetY = height * 0.15 + Math.random() * height * 0.25 - cameraOffsetY;
-      const colors = ['#fde047', '#f43f5e', '#38bdf8', '#a855f7', '#34d399', '#fb923c'];
-      
-      fireworks.push({
-        x: startX,
-        y: height - cameraOffsetY,
-        prevY: height - cameraOffsetY,
-        targetY: targetY,
-        speed: Math.random() * 3.5 + 8,
-        color: colors[Math.floor(Math.random() * colors.length)],
-        trail: [],
-        exploded: false
-      });
+    // --- FIREWORKS ENGINE (adapted from the supplied reference) ---
+    // The reference uses separate trail/main canvases, a physics-driven comet,
+    // spherical burst distribution, drag, gravity, glitter sparks and burst flashes.
+    // Audio / UI / click-launch behavior are intentionally omitted.
+
+    const FW_GRAVITY = 0.9;
+    const FW_QUALITY = 2;
+    const FW_QUALITY_HIGH = FW_QUALITY >= 3;
+
+    const FW_COLOR = {
+      Red: '#ff0043',
+      Green: '#14fc56',
+      Blue: '#1e7fff',
+      Purple: '#e60aff',
+      Gold: '#ffbf36',
+      White: '#ffffff'
+    };
+    const FW_INVISIBLE = '_INVISIBLE_';
+    const FW_COLOR_CODES = Object.values(FW_COLOR);
+    const FW_COLOR_CODES_W_INVIS = [...FW_COLOR_CODES, FW_INVISIBLE];
+    const FW_PI2 = Math.PI * 2;
+    const FW_PI_HALF = Math.PI * 0.5;
+
+    let fwLastColor = null;
+    let fwCurrentFrame = 0;
+    let fwLastTimestamp = 0;
+    let fwInitialized = false;
+    let fwShowToken = 0;
+
+    const FW_MATH = {
+      dist: (w, h) => Math.sqrt(w * w + h * h),
+      pointDist: (x1, y1, x2, y2) => Math.hypot(x2 - x1, y2 - y1),
+      angle: (w, h) => (Math.PI / 2 + Math.atan2(h, w)),
+      pointAngle: (x1, y1, x2, y2) => (Math.PI / 2 + Math.atan2(y2 - y1, x2 - x1)),
+      random: (min, max) => Math.random() * (max - min) + min,
+      randomInt: (min, max) => ((Math.random() * (max - min + 1)) | 0) + min,
+      choice: arr => arr[(Math.random() * arr.length) | 0],
+      clamp: (n, min, max) => Math.min(Math.max(n, min), max)
+    };
+
+    function fwRandomColor({ notSame = false, notColor = null, limitWhite = false } = {}) {
+      let color = FW_MATH.choice(FW_COLOR_CODES);
+      if (limitWhite && color === FW_COLOR.White && Math.random() < 0.6) {
+        color = FW_MATH.choice(FW_COLOR_CODES.filter(c => c !== FW_COLOR.White));
+      }
+      if (notSame && color === fwLastColor) {
+        const pool = FW_COLOR_CODES.filter(c => c !== fwLastColor);
+        color = FW_MATH.choice(pool);
+      }
+      if (notColor && color === notColor) {
+        const pool = FW_COLOR_CODES.filter(c => c !== notColor);
+        color = FW_MATH.choice(pool);
+      }
+      fwLastColor = color;
+      return color;
     }
 
-    function createExplosion(x, y, color) {
-      const particleCount = 60;
-      for (let i = 0; i < particleCount; i++) {
-        const angle = (Math.PI * 2 / particleCount) * i + Math.random() * 0.2;
-        const speed = Math.random() * 5 + 2;
-        particles.push({
-          x: x,
-          y: y,
-          vx: Math.cos(angle) * speed,
-          vy: Math.sin(angle) * speed,
-          color: color,
-          alpha: 1,
-          decay: Math.random() * 0.015 + 0.01,
-          gravity: 0.08
-        });
+    function fwWhiteOrGold() {
+      return Math.random() < 0.5 ? FW_COLOR.Gold : FW_COLOR.White;
+    }
+
+    function fwMakePistilColor(shellColor) {
+      return (shellColor === FW_COLOR.White || shellColor === FW_COLOR.Gold)
+        ? fwRandomColor({ notColor: shellColor })
+        : fwWhiteOrGold();
+    }
+
+    const FW_Star = {
+      drawWidth: 2.8,
+      airDrag: 0.98,
+      airDragHeavy: 0.992,
+      active: Object.fromEntries(FW_COLOR_CODES_W_INVIS.map(c => [c, []])),
+      pool: [],
+
+      add(x, y, color, angle, speed, life, speedOffX = 0, speedOffY = 0) {
+        const s = this.pool.pop() || {};
+        s.visible = true;
+        s.heavy = false;
+        s.x = x;
+        s.y = y;
+        s.prevX = x;
+        s.prevY = y;
+        s.color = color;
+        s.speedX = Math.sin(angle) * speed + speedOffX;
+        s.speedY = Math.cos(angle) * speed + speedOffY;
+        s.life = life;
+        s.fullLife = life;
+        s.spinAngle = Math.random() * FW_PI2;
+        s.spinSpeed = 0.8;
+        s.spinRadius = 0;
+        s.sparkFreq = 0;
+        s.sparkSpeed = 1;
+        s.sparkTimer = 0;
+        s.sparkColor = color;
+        s.sparkLife = 750;
+        s.sparkLifeVariation = 0.25;
+        s.strobe = false;
+        s.strobeFreq = 0;
+        s.secondColor = null;
+        s.transitionTime = 0;
+        s.colorChanged = false;
+        s.onDeath = null;
+        this.active[color].push(s);
+        return s;
+      },
+
+      returnInstance(s) {
+        if (s.onDeath) s.onDeath(s);
+        s.onDeath = null;
+        s.secondColor = null;
+        s.transitionTime = 0;
+        s.colorChanged = false;
+        this.pool.push(s);
+      }
+    };
+
+    const FW_Spark = {
+      drawWidth: 1,
+      airDrag: 0.9,
+      active: Object.fromEntries(FW_COLOR_CODES_W_INVIS.map(c => [c, []])),
+      pool: [],
+
+      add(x, y, color, angle, speed, life) {
+        const s = this.pool.pop() || {};
+        s.x = x;
+        s.y = y;
+        s.prevX = x;
+        s.prevY = y;
+        s.color = color;
+        s.speedX = Math.sin(angle) * speed;
+        s.speedY = Math.cos(angle) * speed;
+        s.life = life;
+        this.active[color].push(s);
+        return s;
+      },
+
+      returnInstance(s) {
+        this.pool.push(s);
+      }
+    };
+
+    const FW_BurstFlash = {
+      active: [],
+      pool: [],
+
+      add(x, y, radius) {
+        const bf = this.pool.pop() || {};
+        bf.x = x;
+        bf.y = y;
+        bf.radius = radius;
+        this.active.push(bf);
+      },
+
+      returnInstance(bf) {
+        this.pool.push(bf);
+      }
+    };
+
+    function createParticleArc(start, arcLength, count, randomness, particleFactory) {
+      const angleDelta = arcLength / count;
+      for (let i = 0; i < count; i++) {
+        const angle = start + i * angleDelta + (Math.random() - 0.5) * angleDelta * randomness;
+        particleFactory(angle);
       }
     }
 
-    function launchLoveForeverBurst() {
-      // Launch multiple rockets in unison
-      for (let i = -3; i <= 3; i++) {
-        fireworks.push({
-          x: width / 2 + i * 40,
-          y: height - cameraOffsetY,
-          targetY: height * 0.22 - cameraOffsetY,
-          speed: 9.5,
-          color: '#fef08a',
-          trail: [],
-          exploded: false,
-          isTextRocket: i === 0
-        });
-      }
-    }
+    function createBurst(count, particleFactory, startAngle = 0, arcLength = FW_PI2) {
+      const R = 0.5 * Math.sqrt(count / Math.PI);
+      const C = 2 * R * Math.PI;
+      const C_HALF = C / 2;
 
-    function createTextParticles(cx, cy) {
-      // Offscreen canvas to sample text "LOVE FOREVER"
-      const tCanvas = document.createElement('canvas');
-      const tCtx = tCanvas.getContext('2d');
-      tCanvas.width = 800;
-      tCanvas.height = 200;
-      
-      tCtx.fillStyle = '#ffffff';
-      tCtx.font = 'bold 70px "Quicksand", sans-serif';
-      tCtx.textAlign = 'center';
-      tCtx.textBaseline = 'middle';
-      tCtx.fillText('LOVE FOREVER', 400, 100);
+      for (let i = 0; i <= C_HALF; i++) {
+        const ringAngle = i / C_HALF * FW_PI_HALF;
+        const ringSize = Math.cos(ringAngle);
+        const partsPerFullRing = C * ringSize;
+        const partsPerArc = partsPerFullRing * (arcLength / FW_PI2);
+        const angleInc = FW_PI2 / Math.max(1, partsPerFullRing);
+        const angleOffset = Math.random() * angleInc + startAngle;
+        const maxRandomAngleOffset = angleInc * 0.33;
 
-      const imgData = tCtx.getImageData(0, 0, 800, 200);
-      const data = imgData.data;
-
-      // Sample pixels to form particles
-      const step = 6;
-      for (let y = 0; y < 200; y += step) {
-        for (let x = 0; x < 800; x += step) {
-          const index = (y * 800 + x) * 4;
-          if (data[index + 3] > 128) {
-            const px = cx + (x - 400) * (width < 640 ? 0.75 : 1.1);
-            const py = cy + (y - 100) * (width < 640 ? 0.75 : 1.1);
-            
-            particles.push({
-              x: cx,
-              y: cy,
-              targetX: px,
-              targetY: py,
-              vx: (px - cx) * 0.08 + (Math.random() - 0.5) * 2,
-              vy: (py - cy) * 0.08 + (Math.random() - 0.5) * 2,
-              color: '#fef08a',
-              alpha: 1,
-              decay: 0.006,
-              gravity: 0.015,
-              isText: true
-            });
-          }
+        for (let j = 0; j < partsPerArc; j++) {
+          const angle = angleInc * j + angleOffset + Math.random() * maxRandomAngleOffset;
+          particleFactory(angle, ringSize);
         }
       }
     }
 
+    function fwCrossetteEffect(star) {
+      const startAngle = Math.random() * FW_PI_HALF;
+      createParticleArc(startAngle, FW_PI2, 4, 0.5, angle => {
+        FW_Star.add(star.x, star.y, star.color, angle, Math.random() * 0.6 + 0.75, 600);
+      });
+    }
+
+    function fwCrackleEffect(star) {
+      const count = FW_QUALITY_HIGH ? 32 : 16;
+      createParticleArc(0, FW_PI2, count, 1.8, angle => {
+        FW_Spark.add(
+          star.x, star.y, FW_COLOR.Gold, angle,
+          Math.pow(Math.random(), 0.45) * 2.4,
+          300 + Math.random() * 200
+        );
+      });
+    }
+
+    function fwFloralEffect(star) {
+      const count = 12 + 6 * FW_QUALITY;
+      createBurst(count, (angle, speedMult) => {
+        FW_Star.add(
+          star.x, star.y, star.color, angle, speedMult * 2.4,
+          1000 + Math.random() * 300, star.speedX, star.speedY
+        );
+      });
+      FW_BurstFlash.add(star.x, star.y, 46);
+    }
+
+    function fwFallingLeavesEffect(star) {
+      createBurst(7, (angle, speedMult) => {
+        const s = FW_Star.add(
+          star.x, star.y, FW_INVISIBLE, angle, speedMult * 2.4,
+          2400 + Math.random() * 600, star.speedX, star.speedY
+        );
+        s.sparkColor = FW_COLOR.Gold;
+        s.sparkFreq = 144 / FW_QUALITY;
+        s.sparkSpeed = 0.28;
+        s.sparkLife = 750;
+        s.sparkLifeVariation = 3.2;
+      });
+      FW_BurstFlash.add(star.x, star.y, 46);
+    }
+
+    function fwCrysanthemumShell(size = 1) {
+      const glitter = Math.random() < 0.28;
+      const singleColor = Math.random() < 0.72;
+      const color = singleColor
+        ? fwRandomColor({ limitWhite: true })
+        : [fwRandomColor(), fwRandomColor({ notSame: true })];
+      const pistil = singleColor && Math.random() < 0.42;
+      const pistilColor = pistil ? fwMakePistilColor(color) : null;
+      const secondColor = singleColor && (Math.random() < 0.2 || color === FW_COLOR.White)
+        ? pistilColor || fwRandomColor({ notColor: color, limitWhite: true })
+        : null;
+      const streamers = !pistil && color !== FW_COLOR.White && Math.random() < 0.42;
+      return {
+        shellSize: size,
+        spreadSize: 300 + size * 100,
+        starLife: 900 + size * 200,
+        starLifeVariation: 0.125,
+        starDensity: glitter ? 1.1 : 1.25,
+        color,
+        secondColor,
+        glitter: glitter ? 'light' : '',
+        glitterColor: fwWhiteOrGold(),
+        pistil,
+        pistilColor,
+        streamers
+      };
+    }
+
+    function fwRingShell(size = 1) {
+      const color = fwRandomColor();
+      const pistil = Math.random() < 0.75;
+      return {
+        shellSize: size,
+        ring: true,
+        color,
+        spreadSize: 300 + size * 100,
+        starLife: 900 + size * 200,
+        starLifeVariation: 0.125,
+        starCount: 2.2 * FW_PI2 * (size + 1),
+        pistil,
+        pistilColor: fwMakePistilColor(color),
+        glitter: !pistil ? 'light' : '',
+        glitterColor: color === FW_COLOR.Gold ? FW_COLOR.Gold : FW_COLOR.White,
+        streamers: Math.random() < 0.3
+      };
+    }
+
+    function fwStrobeShell(size = 1) {
+      const color = fwRandomColor({ limitWhite: true });
+      return {
+        shellSize: size,
+        spreadSize: 280 + size * 92,
+        starLife: 1100 + size * 200,
+        starLifeVariation: 0.4,
+        starDensity: 1.1,
+        color,
+        glitter: 'light',
+        glitterColor: FW_COLOR.White,
+        strobe: true,
+        strobeColor: Math.random() < 0.5 ? FW_COLOR.White : null,
+        pistil: Math.random() < 0.5,
+        pistilColor: fwMakePistilColor(color)
+      };
+    }
+
+    function fwCrackleShell(size = 1) {
+      const color = Math.random() < 0.75 ? FW_COLOR.Gold : fwRandomColor();
+      return {
+        shellSize: size,
+        spreadSize: 380 + size * 75,
+        starLife: 600 + size * 100,
+        starLifeVariation: 0.32,
+        starDensity: 1,
+        glitter: 'light',
+        glitterColor: FW_COLOR.Gold,
+        color,
+        crackle: true,
+        pistil: Math.random() < 0.65,
+        pistilColor: fwMakePistilColor(color)
+      };
+    }
+
+    function fwWillowShell(size = 1) {
+      return {
+        shellSize: size,
+        spreadSize: 300 + size * 100,
+        starLife: 3000 + size * 300,
+        starLifeVariation: 0.125,
+        starDensity: 0.6,
+        glitter: 'willow',
+        glitterColor: FW_COLOR.Gold,
+        color: FW_INVISIBLE
+      };
+    }
+
+    const FW_SHELLS = [fwCrysanthemumShell, fwCrysanthemumShell, fwRingShell, fwStrobeShell, fwCrackleShell, fwWillowShell];
+
+    class FWShell {
+      constructor(options) {
+        Object.assign(this, options);
+        this.starLifeVariation = options.starLifeVariation || 0.125;
+        this.color = options.color || fwRandomColor();
+        this.glitterColor = options.glitterColor || this.color;
+        if (!this.starCount) {
+          const density = options.starDensity || 1;
+          const scaledSize = this.spreadSize / 54;
+          this.starCount = Math.max(6, scaledSize * scaledSize * density);
+        }
+      }
+
+      launch(position, launchHeight) {
+        const w = stageW;
+        const h = stageH;
+        const hpad = 60;
+        const vpad = 50;
+        const minHeight = h - h * 0.45;
+        const launchX = position * (w - hpad * 2) + hpad;
+        const cameraComp = -cameraOffsetY;
+        const launchY = h + cameraComp;
+        const burstY = minHeight - (launchHeight * (minHeight - vpad)) + cameraComp;
+        const launchDistance = launchY - burstY;
+        const launchVelocity = Math.pow(Math.max(1, launchDistance * 0.04), 0.64);
+
+        const comet = this.comet = FW_Star.add(
+          launchX,
+          launchY,
+          typeof this.color === 'string' && this.color !== 'random' ? this.color : FW_COLOR.White,
+          Math.PI,
+          launchVelocity * (this.horsetail ? 1.2 : 1),
+          launchVelocity * (this.horsetail ? 100 : 400)
+        );
+
+        comet.heavy = true;
+        comet.spinRadius = FW_MATH.random(0.32, 0.85);
+        comet.sparkFreq = 32 / FW_QUALITY;
+        if (FW_QUALITY_HIGH) comet.sparkFreq = 8;
+        comet.sparkLife = 320;
+        comet.sparkLifeVariation = 3;
+
+        if (this.glitter === 'willow' || this.fallingLeaves) {
+          comet.sparkFreq = 20 / FW_QUALITY;
+          comet.sparkSpeed = 0.5;
+          comet.sparkLife = 500;
+        }
+        if (this.color === FW_INVISIBLE) comet.sparkColor = FW_COLOR.Gold;
+
+        if (Math.random() > 0.4 && !this.horsetail) {
+          comet.secondColor = FW_INVISIBLE;
+          comet.transitionTime = Math.pow(Math.random(), 1.5) * 700 + 500;
+        }
+
+        comet.onDeath = c => this.burst(c.x, c.y);
+      }
+
+      burst(x, y) {
+        const speed = this.spreadSize / 96;
+        let color;
+        let onDeath = null;
+        let sparkFreq = 0;
+        let sparkSpeed = 0;
+        let sparkLife = 0;
+        let sparkLifeVariation = 0.25;
+
+        if (this.crossette) onDeath = fwCrossetteEffect;
+        if (this.crackle) onDeath = fwCrackleEffect;
+        if (this.floral) onDeath = fwFloralEffect;
+        if (this.fallingLeaves) onDeath = fwFallingLeavesEffect;
+
+        if (this.glitter === 'light') {
+          sparkFreq = 400; sparkSpeed = 0.3; sparkLife = 300; sparkLifeVariation = 2;
+        } else if (this.glitter === 'medium') {
+          sparkFreq = 200; sparkSpeed = 0.44; sparkLife = 700; sparkLifeVariation = 2;
+        } else if (this.glitter === 'heavy') {
+          sparkFreq = 80; sparkSpeed = 0.8; sparkLife = 1400; sparkLifeVariation = 2;
+        } else if (this.glitter === 'thick') {
+          sparkFreq = 16; sparkSpeed = FW_QUALITY_HIGH ? 1.65 : 1.5; sparkLife = 1400; sparkLifeVariation = 3;
+        } else if (this.glitter === 'streamer') {
+          sparkFreq = 32; sparkSpeed = 1.05; sparkLife = 620; sparkLifeVariation = 2;
+        } else if (this.glitter === 'willow') {
+          sparkFreq = 120; sparkSpeed = 0.34; sparkLife = 1400; sparkLifeVariation = 3.8;
+        }
+        sparkFreq = sparkFreq ? sparkFreq / FW_QUALITY : 0;
+
+        const starFactory = (angle, speedMult) => {
+          const standardInitialSpeed = this.spreadSize / 1800;
+          const star = FW_Star.add(
+            x, y, color || fwRandomColor(), angle, speedMult * speed,
+            this.starLife + Math.random() * this.starLife * this.starLifeVariation,
+            this.horsetail ? this.comet?.speedX : 0,
+            this.horsetail ? this.comet?.speedY : -standardInitialSpeed
+          );
+
+          if (this.secondColor) {
+            star.transitionTime = this.starLife * (Math.random() * 0.05 + 0.32);
+            star.secondColor = this.secondColor;
+          }
+
+          if (this.strobe) {
+            star.transitionTime = this.starLife * (Math.random() * 0.08 + 0.46);
+            star.strobe = true;
+            star.strobeFreq = Math.random() * 20 + 40;
+            if (this.strobeColor) star.secondColor = this.strobeColor;
+          }
+
+          star.onDeath = onDeath;
+          if (this.glitter) {
+            star.sparkFreq = sparkFreq;
+            star.sparkSpeed = sparkSpeed;
+            star.sparkLife = sparkLife;
+            star.sparkLifeVariation = sparkLifeVariation;
+            star.sparkColor = this.glitterColor;
+            star.sparkTimer = Math.random() * Math.max(1, star.sparkFreq);
+          }
+        };
+
+        if (typeof this.color === 'string') {
+          color = this.color === 'random' ? null : this.color;
+
+          if (this.ring) {
+            const ringStartAngle = Math.random() * Math.PI;
+            const ringSquash = Math.pow(Math.random(), 2) * 0.85 + 0.15;
+            createParticleArc(0, FW_PI2, this.starCount, 0, angle => {
+              const initSpeedX = Math.sin(angle) * speed * ringSquash;
+              const initSpeedY = Math.cos(angle) * speed;
+              const newSpeed = FW_MATH.pointDist(0, 0, initSpeedX, initSpeedY);
+              const newAngle = FW_MATH.pointAngle(0, 0, initSpeedX, initSpeedY) + ringStartAngle;
+              const star = FW_Star.add(
+                x, y, color, newAngle, newSpeed,
+                this.starLife + Math.random() * this.starLife * this.starLifeVariation
+              );
+              if (this.glitter) {
+                star.sparkFreq = sparkFreq;
+                star.sparkSpeed = sparkSpeed;
+                star.sparkLife = sparkLife;
+                star.sparkLifeVariation = sparkLifeVariation;
+                star.sparkColor = this.glitterColor;
+                star.sparkTimer = Math.random() * Math.max(1, star.sparkFreq);
+              }
+            });
+          } else {
+            createBurst(this.starCount, starFactory);
+          }
+        } else {
+          if (Math.random() < 0.5) {
+            const start = Math.random() * Math.PI;
+            const arc = Math.PI;
+            color = this.color[0];
+            createBurst(this.starCount, starFactory, start, arc);
+            color = this.color[1];
+            createBurst(this.starCount, starFactory, start + Math.PI, arc);
+          } else {
+            color = this.color[0];
+            createBurst(this.starCount / 2, starFactory);
+            color = this.color[1];
+            createBurst(this.starCount / 2, starFactory);
+          }
+        }
+
+        if (this.pistil) {
+          const inner = new FWShell({
+            spreadSize: this.spreadSize * 0.5,
+            starLife: this.starLife * 0.6,
+            starLifeVariation: this.starLifeVariation,
+            starDensity: 1.4,
+            color: this.pistilColor,
+            glitter: 'light',
+            glitterColor: this.pistilColor === FW_COLOR.Gold ? FW_COLOR.Gold : FW_COLOR.White
+          });
+          inner.burst(x, y);
+        }
+
+        if (this.streamers) {
+          const inner = new FWShell({
+            spreadSize: this.spreadSize * 0.9,
+            starLife: this.starLife * 0.8,
+            starLifeVariation: this.starLifeVariation,
+            starCount: Math.floor(Math.max(6, this.spreadSize / 45)),
+            color: FW_COLOR.White,
+            glitter: 'streamer',
+            glitterColor: FW_COLOR.White
+          });
+          inner.burst(x, y);
+        }
+
+        FW_BurstFlash.add(x, y, this.spreadSize / 4);
+      }
+    }
+
+    function fwGetRandomShellSize() {
+      const base = 2.7;
+      const maxVariance = Math.min(1.5, base);
+      const variance = Math.random() * maxVariance;
+      const size = base - variance;
+      const height = maxVariance === 0 ? Math.random() : 1 - (variance / maxVariance);
+      const centerOffset = Math.random() * (1 - height * 0.65) * 0.5;
+      const x = Math.random() < 0.5 ? 0.5 - centerOffset : 0.5 + centerOffset;
+      return {
+        size,
+        x: (1 - 0.36) * x + 0.18,
+        height: height * 0.75
+      };
+    }
+
+    function fwMakeShell() {
+      const factory = FW_SHELLS[(Math.random() * FW_SHELLS.length) | 0];
+      const size = fwGetRandomShellSize();
+      return { shell: new FWShell(factory(size.size)), x: size.x, height: size.height };
+    }
+
+    function launchRandomFirework() {
+      const { shell, x, height: launchHeight } = fwMakeShell();
+      shell.launch(x, launchHeight);
+    }
+
+    function launchFireworkPair() {
+      const a = fwGetRandomShellSize();
+      const b = fwGetRandomShellSize();
+      const left = new FWShell(FW_SHELLS[(Math.random() * FW_SHELLS.length) | 0](a.size));
+      const right = new FWShell(FW_SHELLS[(Math.random() * FW_SHELLS.length) | 0](b.size));
+      left.launch(Math.min(0.43, a.x), a.height);
+      setTimeout(() => {
+        if (currentState === STATES.FIREWORKS_SHOW) {
+          right.launch(Math.max(0.57, b.x), b.height);
+        }
+      }, 110);
+    }
+
+    function launchFireworkTriple() {
+      const shellFactory = FW_SHELLS[(Math.random() * FW_SHELLS.length) | 0];
+      const center = new FWShell(shellFactory(2.4));
+      center.launch(0.5, 0.62);
+      setTimeout(() => {
+        if (currentState === STATES.FIREWORKS_SHOW) {
+          const left = new FWShell(shellFactory(1.7));
+          left.launch(0.22 + Math.random() * 0.08, 0.22);
+        }
+      }, 1000 + Math.random() * 280);
+      setTimeout(() => {
+        if (currentState === STATES.FIREWORKS_SHOW) {
+          const right = new FWShell(shellFactory(1.7));
+          right.launch(0.78 - Math.random() * 0.08, 0.22);
+        }
+      }, 1050 + Math.random() * 280);
+    }
+
+    function fireworkShowTick() {
+      if (currentState !== STATES.FIREWORKS_SHOW) return;
+      const r = Math.random();
+      if (r < 0.55) {
+        launchRandomFirework();
+      } else if (r < 0.82) {
+        launchFireworkPair();
+      } else {
+        launchFireworkTriple();
+      }
+    }
+
+    function launchLoveForeverBurst() {
+      // Seven simultaneous gold shells, with the center shell forming the text.
+      for (let i = -3; i <= 3; i++) {
+        const shell = new FWShell(fwCrysanthemumShell(2.8));
+        const xPos = 0.5 + (i * 0.055);
+        shell.launch(xPos, 0.34);
+        if (i === 0) {
+          // Replace the center comet death burst with the text-forming effect.
+          shell.comet.onDeath = comet => createTextParticles(comet.x, comet.y);
+        }
+      }
+    }
+
+    function updateFireworkPhysics(frameTime) {
+      const lag = Math.max(0.15, Math.min(4.1, frameTime / 16.6667));
+      const timeStep = Math.min(68, Math.max(0, frameTime));
+      const speed = lag;
+      const starDrag = 1 - (1 - FW_Star.airDrag) * speed;
+      const starDragHeavy = 1 - (1 - FW_Star.airDragHeavy) * speed;
+      const sparkDrag = 1 - (1 - FW_Spark.airDrag) * speed;
+      const gAcc = (timeStep / 1000) * FW_GRAVITY;
+
+      fwCurrentFrame++;
+
+      FW_COLOR_CODES_W_INVIS.forEach(color => {
+        const stars = FW_Star.active[color];
+        for (let i = stars.length - 1; i >= 0; i--) {
+          const star = stars[i];
+          if (star.updateFrame === fwCurrentFrame) continue;
+          star.updateFrame = fwCurrentFrame;
+
+          star.life -= timeStep;
+          if (star.life <= 0) {
+            stars.splice(i, 1);
+            FW_Star.returnInstance(star);
+            continue;
+          }
+
+          const burnRate = Math.pow(star.life / star.fullLife, 0.5);
+          const burnRateInverse = 1 - burnRate;
+
+          star.prevX = star.x;
+          star.prevY = star.y;
+          star.x += star.speedX * speed;
+          star.y += star.speedY * speed;
+
+          if (!star.heavy) {
+            star.speedX *= starDrag;
+            star.speedY *= starDrag;
+          } else {
+            star.speedX *= starDragHeavy;
+            star.speedY *= starDragHeavy;
+          }
+          star.speedY += gAcc;
+
+          if (star.spinRadius) {
+            star.spinAngle += star.spinSpeed * speed;
+            star.x += Math.sin(star.spinAngle) * star.spinRadius * speed;
+            star.y += Math.cos(star.spinAngle) * star.spinRadius * speed;
+          }
+
+          if (star.sparkFreq) {
+            star.sparkTimer -= timeStep;
+            while (star.sparkTimer < 0) {
+              star.sparkTimer += star.sparkFreq * 0.75 + star.sparkFreq * burnRateInverse * 4;
+              FW_Spark.add(
+                star.x,
+                star.y,
+                star.sparkColor,
+                Math.random() * FW_PI2,
+                Math.random() * star.sparkSpeed * burnRate,
+                star.sparkLife * 0.8 + Math.random() * star.sparkLifeVariation * star.sparkLife
+              );
+            }
+          }
+
+          if (star.life < star.transitionTime) {
+            if (star.secondColor && !star.colorChanged) {
+              star.colorChanged = true;
+              const oldColor = star.color;
+              stars.splice(i, 1);
+              star.color = star.secondColor;
+              if (!FW_Star.active[star.secondColor]) FW_Star.active[star.secondColor] = [];
+              FW_Star.active[star.secondColor].push(star);
+              if (star.secondColor === FW_INVISIBLE) star.sparkFreq = 0;
+              // oldColor is intentionally unused; the source renderer works by moving the particle between buckets.
+              void oldColor;
+            }
+            if (star.strobe) {
+              star.visible = Math.floor(star.life / star.strobeFreq) % 3 === 0;
+            }
+          }
+        }
+
+        const sparks = FW_Spark.active[color];
+        for (let i = sparks.length - 1; i >= 0; i--) {
+          const spark = sparks[i];
+          spark.life -= timeStep;
+          if (spark.life <= 0) {
+            sparks.splice(i, 1);
+            FW_Spark.returnInstance(spark);
+          } else {
+            spark.prevX = spark.x;
+            spark.prevY = spark.y;
+            spark.x += spark.speedX * speed;
+            spark.y += spark.speedY * speed;
+            spark.speedX *= sparkDrag;
+            spark.speedY *= sparkDrag;
+            spark.speedY += gAcc;
+          }
+        }
+      });
+    }
+
+    function drawFireworkLayers() {
+      // Fade the trails canvas for a photographic light-trail feel.
+      const activeFireworks =
+        currentState === STATES.FIREWORKS_SHOW ||
+        currentState === STATES.FIREWORKS_PAUSE ||
+        currentState === STATES.LOVE_FOREVER_BURST;
+
+      if (!activeFireworks) {
+        trailsCtx.clearRect(0, 0, width, height);
+        return;
+      }
+
+      trailsCtx.globalCompositeOperation = 'source-over';
+      trailsCtx.fillStyle = 'rgba(0, 0, 0, 0.18)';
+      trailsCtx.fillRect(0, 0, width, height);
+      trailsCtx.globalCompositeOperation = 'lighter';
+
+      // Burst flashes.
+      while (FW_BurstFlash.active.length) {
+        const bf = FW_BurstFlash.active.pop();
+        const g = trailsCtx.createRadialGradient(bf.x, bf.y, 0, bf.x, bf.y, bf.radius);
+        g.addColorStop(0.024, 'rgba(255,255,255,1)');
+        g.addColorStop(0.125, 'rgba(255,160,20,0.24)');
+        g.addColorStop(0.32, 'rgba(255,140,20,0.12)');
+        g.addColorStop(1, 'rgba(255,120,20,0)');
+        trailsCtx.fillStyle = g;
+        trailsCtx.fillRect(bf.x - bf.radius, bf.y - bf.radius, bf.radius * 2, bf.radius * 2);
+        FW_BurstFlash.returnInstance(bf);
+      }
+
+      trailsCtx.lineWidth = FW_Star.drawWidth;
+      trailsCtx.lineCap = 'round';
+      FW_COLOR_CODES.forEach(color => {
+        const stars = FW_Star.active[color];
+        trailsCtx.strokeStyle = color;
+        trailsCtx.beginPath();
+        stars.forEach(star => {
+          if (star.visible) {
+            trailsCtx.moveTo(star.x, star.y);
+            trailsCtx.lineTo(star.prevX, star.prevY);
+          }
+        });
+        trailsCtx.stroke();
+      });
+
+      trailsCtx.lineWidth = FW_Spark.drawWidth;
+      trailsCtx.lineCap = 'butt';
+      FW_COLOR_CODES.forEach(color => {
+        const sparks = FW_Spark.active[color];
+        trailsCtx.strokeStyle = color;
+        trailsCtx.beginPath();
+        sparks.forEach(s => {
+          trailsCtx.moveTo(s.x, s.y);
+          trailsCtx.lineTo(s.prevX, s.prevY);
+        });
+        trailsCtx.stroke();
+      });
+    }
+
+    function clearFireworkEngine() {
+      FW_COLOR_CODES_W_INVIS.forEach(color => {
+        FW_Star.active[color].length = 0;
+        FW_Spark.active[color].length = 0;
+      });
+      FW_BurstFlash.active.length = 0;
+      trailsCtx.clearRect(0, 0, width, height);
+    }
+
     // --- MAIN RENDER LOOP ---
     function render(timestamp) {
+      if (!fwInitialized) {
+        fwInitialized = true;
+        fwLastTimestamp = timestamp;
+      }
+      const frameTime = Math.min(68, Math.max(0, timestamp - fwLastTimestamp || 16.6667));
+      fwLastTimestamp = timestamp;
+
+      // Physics first so trails follow the exact current segment.
+      if (
+        currentState === STATES.FIREWORKS_SHOW ||
+        currentState === STATES.FIREWORKS_PAUSE ||
+        currentState === STATES.LOVE_FOREVER_BURST
+      ) {
+        updateFireworkPhysics(frameTime);
+      }
+
+      // Main canvas.
       ctx.clearRect(0, 0, width, height);
 
-      // Save context for camera pan
+      // Firework trail layer is behind the main scene.
+      drawFireworkLayers();
+
+      // Save context for camera pan.
       ctx.save();
       ctx.translate(0, cameraOffsetY);
 
-      // 1. Draw Stars
+      // 1. Draw Stars.
       for (let s of stars) {
         s.alpha += Math.sin(timestamp * s.twinkleSpeed) * 0.01;
         ctx.fillStyle = `rgba(255, 255, 255, ${Math.max(0.1, Math.min(1, s.alpha))})`;
@@ -620,18 +1337,23 @@
         ctx.fill();
       }
 
-      // 2. Draw Moon
+      // 2. Draw Moon.
       if (moon.opacity > 0) {
         ctx.save();
-        
-        // Smooth hover dynamics. The state is locked permanently after clicking.
+
         const hoverTarget = (!moon.hoverLocked && moon.isHovered) ? 1 : 0;
         moon.hoverAmount = (moon.hoverAmount || 0) + (hoverTarget - (moon.hoverAmount || 0)) * 0.08;
         const currentR = moon.radius * (1 + moon.hoverAmount * 0.08);
 
-        // Moon Glow
-        const glowRadius = currentR * (currentState === STATES.MOON_GLOWING_UP ? 3.5 : 2.2) * (1 + moon.hoverAmount * 0.18);
-        const glowGradient = ctx.createRadialGradient(moon.x, moon.y, currentR * 0.5, moon.x, moon.y, glowRadius);
+        const glowRadius =
+          currentR *
+          (currentState === STATES.MOON_GLOWING_UP ? 3.5 : 2.2) *
+          (1 + moon.hoverAmount * 0.18);
+
+        const glowGradient = ctx.createRadialGradient(
+          moon.x, moon.y, currentR * 0.5,
+          moon.x, moon.y, glowRadius
+        );
         const hoverGlow = moon.hoverAmount * 0.18;
         glowGradient.addColorStop(0, `rgba(254, 240, 138, ${moon.glowOpacity + hoverGlow})`);
         glowGradient.addColorStop(0.5, `rgba(253, 224, 71, ${(moon.glowOpacity + hoverGlow) * 0.3})`);
@@ -642,13 +1364,12 @@
         ctx.arc(moon.x, moon.y, glowRadius, 0, Math.PI * 2);
         ctx.fill();
 
-        // Moon Solid
         const moonGradient = ctx.createRadialGradient(
-          moon.x - currentR * 0.3, 
-          moon.y - currentR * 0.3, 
-          currentR * 0.1, 
-          moon.x, 
-          moon.y, 
+          moon.x - currentR * 0.3,
+          moon.y - currentR * 0.3,
+          currentR * 0.1,
+          moon.x,
+          moon.y,
           currentR
         );
         moonGradient.addColorStop(0, '#ffffff');
@@ -663,34 +1384,30 @@
         ctx.restore();
       }
 
-      // 3. Draw Lanterns
+      // 3. Draw Lanterns.
       if (currentState === STATES.INTERACTIVE_SKY || currentState === STATES.WAITING_LANTERNS_CLEAR) {
         for (let i = lanterns.length - 1; i >= 0; i--) {
           const l = lanterns[i];
-          // Calm vertical drift only: no horizontal wobble, no rotation.
           l.y -= l.speedY;
 
-          // Render Lantern
           ctx.save();
           ctx.globalAlpha = l.opacity;
           ctx.translate(l.x, l.y);
 
-          // Lantern Glow
           const lGlow = ctx.createRadialGradient(0, 0, 2, 0, 0, l.size * 1.8);
           lGlow.addColorStop(0, 'rgba(251, 146, 60, 0.8)');
-          lGlow.addColorStop(1, 'rgba(0, 0, 0, 0)');
+          lGlow.addColorStop(0.5, 'rgba(251, 146, 60, 0.2)');
+          lGlow.addColorStop(1, 'rgba(251, 146, 60, 0)');
           ctx.fillStyle = lGlow;
           ctx.beginPath();
           ctx.arc(0, 0, l.size * 1.8, 0, Math.PI * 2);
           ctx.fill();
 
-          // Lantern Body
           ctx.fillStyle = '#f97316';
           ctx.beginPath();
           ctx.roundRect(-l.size * 0.5, -l.size * 0.65, l.size, l.size * 1.3, 6);
           ctx.fill();
 
-          // Inner Light
           ctx.fillStyle = '#fef08a';
           ctx.beginPath();
           ctx.arc(0, 0, l.size * 0.3, 0, Math.PI * 2);
@@ -698,72 +1415,46 @@
 
           ctx.restore();
 
-          // Recycle/Remove offscreen lanterns
-          if (l.y < -60) {
+          if (l.y < -50) {
             if (currentState === STATES.INTERACTIVE_SKY) {
-              // Reuse the same horizontal lane and send it far below the screen.
-              l.x = Math.random() * Math.max(1, width - 60) + 30;
-              l.y = height + 120 + (l.index % 5) * 65 + Math.random() * 55;
+              lanterns[i] = createLantern();
             } else {
               lanterns.splice(i, 1);
             }
           }
         }
 
-        // Check if all lanterns cleared in WAITING state
         if (currentState === STATES.WAITING_LANTERNS_CLEAR && lanterns.length === 0) {
           currentState = STATES.MOON_GLOWING_UP;
-          moon.glowOpacity = 0.18;
-          const glowStart = performance.now();
-          (function easeFinalMoonGlow() {
-            const p = Math.min(1, (performance.now() - glowStart) / 4200);
-            moon.glowOpacity = 0.18 + (1 - 0.18) * (0.5 - Math.cos(p * Math.PI) / 2);
-            if (p < 1 && currentState === STATES.MOON_GLOWING_UP) requestAnimationFrame(easeFinalMoonGlow);
-          })();
+          moon.glowOpacity = 1;
         }
       }
 
-      // 4. Draw Fireworks & Particles
-      for (let i = fireworks.length - 1; i >= 0; i--) {
-        const fw = fireworks[i];
-        fw.prevY = fw.y;
-        fw.y -= fw.speed;
-
-        fw.trail.push({ y: fw.y });
-        if (fw.trail.length > 9) fw.trail.shift();
-
-        for (let t = 0; t < fw.trail.length; t++) {
-          const point = fw.trail[t];
-          const a = (t + 1) / fw.trail.length * 0.4;
-          ctx.globalAlpha = a;
-          ctx.strokeStyle = fw.color;
-          ctx.lineWidth = Math.max(0.8, 2.2 - t * 0.12);
+      // 4. Main-canvas firework highlights. The long trails stay on trailsCtx.
+      if (
+        currentState === STATES.FIREWORKS_SHOW ||
+        currentState === STATES.FIREWORKS_PAUSE ||
+        currentState === STATES.LOVE_FOREVER_BURST
+      ) {
+        ctx.globalCompositeOperation = 'lighter';
+        ctx.lineWidth = 1.4;
+        FW_COLOR_CODES.forEach(color => {
+          ctx.strokeStyle = color;
           ctx.beginPath();
-          ctx.moveTo(fw.x, point.y - 2);
-          ctx.lineTo(fw.x, point.y + 7);
+          FW_Star.active[color].forEach(star => {
+            if (!star.visible) return;
+            ctx.moveTo(star.x, star.y);
+            ctx.lineTo(star.x - star.speedX * 1.25, star.y - star.speedY * 1.25);
+          });
           ctx.stroke();
-        }
-
-        ctx.globalAlpha = 1;
-        ctx.strokeStyle = fw.color;
-        ctx.lineWidth = 2.4;
-        ctx.beginPath();
-        ctx.moveTo(fw.x, fw.y + 13);
-        ctx.lineTo(fw.x, fw.y - 1);
-        ctx.stroke();
-
-        if (fw.y <= fw.targetY) {
-          if (fw.isTextRocket) {
-            createTextParticles(fw.x, fw.y);
-          } else {
-            createExplosion(fw.x, fw.y, fw.color);
-          }
-          fireworks.splice(i, 1);
-        }
+        });
+        ctx.globalCompositeOperation = 'source-over';
       }
 
+      // 5. Legacy LOVE FOREVER text particles, intentionally retained for the original ending.
       for (let i = particles.length - 1; i >= 0; i--) {
         const p = particles[i];
+        if (!p.isText) continue;
         p.x += p.vx;
         p.y += p.vy;
         p.vy += p.gravity;
@@ -772,51 +1463,48 @@
         ctx.fillStyle = p.color;
         ctx.globalAlpha = Math.max(0, p.alpha);
         ctx.beginPath();
-        ctx.arc(p.x, p.y, p.isText ? 1.8 : 2.2, 0, Math.PI * 2);
+        ctx.arc(p.x, p.y, 1.8, 0, Math.PI * 2);
         ctx.fill();
 
-        if (p.alpha <= 0) {
-          particles.splice(i, 1);
-        }
+        if (p.alpha <= 0) particles.splice(i, 1);
       }
+      ctx.globalAlpha = 1;
 
-      // 5. Draw Silhouettes (Revealed after camera pan)
+      // 6. Draw Silhouettes (Revealed after camera pan) — kept as original.
       if (cameraOffsetY < 0) {
         ctx.save();
         const baseGroundY = height + Math.abs(targetCameraOffsetY) - 10;
 
-        // Hill slope
         ctx.fillStyle = '#020617';
         ctx.beginPath();
         ctx.ellipse(width / 2, baseGroundY + 120, width * 0.7, 160, 0, Math.PI, 0);
         ctx.fill();
 
-        // Two Silhouettes Sitting Together
         const centerX = width / 2;
         const groundY = baseGroundY - 20;
 
         ctx.fillStyle = '#090d16';
 
-        // Person 1 (Left - Head & Torso leaning right)
         ctx.beginPath();
-        ctx.arc(centerX - 16, groundY - 42, 10, 0, Math.PI * 2); // Head
+        ctx.arc(centerX - 16, groundY - 42, 10, 0, Math.PI * 2);
         ctx.fill();
         ctx.beginPath();
-        ctx.ellipse(centerX - 14, groundY - 18, 14, 22, 0.15, 0, Math.PI * 2); // Body
+        ctx.ellipse(centerX - 14, groundY - 18, 14, 22, 0.15, 0, Math.PI * 2);
         ctx.fill();
 
-        // Person 2 (Right - Head leaning on Person 1 shoulder)
         ctx.beginPath();
-        ctx.arc(centerX + 6, groundY - 38, 9, 0, Math.PI * 2); // Head
+        ctx.arc(centerX + 6, groundY - 38, 9, 0, Math.PI * 2);
         ctx.fill();
         ctx.beginPath();
-        ctx.ellipse(centerX + 8, groundY - 16, 13, 20, -0.1, 0, Math.PI * 2); // Body
+        ctx.ellipse(centerX + 8, groundY - 16, 13, 20, -0.1, 0, Math.PI * 2);
         ctx.fill();
 
         ctx.restore();
       }
 
       ctx.restore();
+
+      // Firework text remains visible in front of the dark scene but behind UI overlays.
       requestAnimationFrame(render);
     }
 
