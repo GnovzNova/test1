@@ -11,7 +11,7 @@
     body {
       margin: 0;
       padding: 0;
-      background-color: #030712;
+      background-color: #020617;
       color: #f9fafb;
       font-family: 'Quicksand', sans-serif;
       overflow: hidden;
@@ -22,11 +22,10 @@
       font-family: 'Dancing Script', cursive;
     }
 
-    /* Custom scrollbar & glassmorphism */
     .glass-card {
       background: rgba(15, 23, 42, 0.75);
-      backdrop-filter: blur(16px);
-      -webkit-backdrop-filter: blur(16px);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
       border: 1px solid rgba(255, 255, 255, 0.12);
       box-shadow: 0 20px 50px rgba(0, 0, 0, 0.6);
     }
@@ -35,7 +34,7 @@
       content: '|';
       animation: blink 0.8s infinite;
       color: #fef08a;
-      margin-left: 2px;
+      margin-left: 3px;
     }
 
     @keyframes blink {
@@ -43,7 +42,6 @@
       50% { opacity: 0; }
     }
 
-    /* Smooth Canvas overlay */
     canvas {
       display: block;
       position: absolute;
@@ -60,7 +58,6 @@
 </head>
 <body class="w-screen h-screen relative flex items-center justify-center">
 
-  <!-- Background Canvas for Moon, Stars, Lanterns, Fireworks -->
   <canvas id="mainCanvas"></canvas>
 
   <!-- INTRO SCREEN -->
@@ -70,20 +67,20 @@
     </div>
   </div>
 
-  <!-- CARD MODAL FOR LANTERNS -->
+  <!-- CARD MODAL -->
   <div id="cardModal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-md opacity-0 pointer-events-none transition-all duration-500">
     <div id="cardContainer" class="glass-card rounded-2xl p-6 sm:p-8 max-w-lg w-full transform scale-95 transition-transform duration-500 relative border border-amber-200/20">
       <div class="text-center mb-4">
         <span class="text-3xl">🏮</span>
-        <h3 class="text-amber-200/80 font-handwriting text-xl mt-1">Lời Chúc Đêm Trung Thu</h3>
+        <h3 class="text-amber-200/90 font-handwriting text-2xl mt-1">Lời Chúc Đêm Trung Thu</h3>
       </div>
       
-      <div class="min-h-[120px] flex items-center justify-center my-4">
+      <div class="min-h-[130px] flex items-center justify-center my-4">
         <p id="cardText" class="text-lg text-slate-100 text-center font-normal leading-relaxed whitespace-pre-line"></p>
       </div>
 
       <div id="cardFooter" class="text-center mt-6 opacity-0 transition-opacity duration-700">
-        <p class="text-xs text-slate-400 font-light tracking-wider">Chạm ra ngoài để khép lại.</p>
+        <p class="text-xs text-amber-100/60 font-light tracking-wider">Chạm ra ngoài để khép lại.</p>
       </div>
     </div>
   </div>
@@ -99,7 +96,6 @@
   </div>
 
   <script>
-    // Global Constants & Config
     const LANTERN_LIMIT = 3;
     let lanternClicks = 0;
     let activeCardOpen = false;
@@ -110,7 +106,6 @@
       "Mặt trăng nhỏ này là dành riêng cho em đấy ❤️\nHy vọng chúng ta sẽ cùng nhau đi qua thật nhiều mùa Trung Thu trọn vẹn và hạnh phúc hơn nữa."
     ];
 
-    // State Machine States
     const STATES = {
       INTRO_TYPING: 'INTRO_TYPING',
       DOT_BLINKING: 'DOT_BLINKING',
@@ -128,7 +123,6 @@
 
     let currentState = STATES.INTRO_TYPING;
 
-    // DOM Elements
     const canvas = document.getElementById('mainCanvas');
     const ctx = canvas.getContext('2d');
     const typewriterTextEl = document.getElementById('typewriterText');
@@ -140,7 +134,6 @@
     const endingText1 = document.getElementById('endingText1');
     const endingText2 = document.getElementById('endingText2');
 
-    // Canvas Dimensions & Camera Offset
     let width, height;
     let cameraOffsetY = 0;
     let targetCameraOffsetY = 0;
@@ -152,14 +145,11 @@
     window.addEventListener('resize', resize);
     resize();
 
-    // World Elements Data Structures
     let stars = [];
     let lanterns = [];
     let fireworks = [];
     let particles = [];
-    let textParticles = [];
 
-    // Moon Properties
     const moon = {
       x: 0,
       y: 0,
@@ -171,7 +161,6 @@
       isHovered: false
     };
 
-    // --- INTRO TYPEWRITER LOGIC ---
     const introLines = [
       "25-9-2026",
       "Rằm tháng 8 rồi đấy",
@@ -184,27 +173,22 @@
       
       for (let i = 0; i < introLines.length; i++) {
         const line = introLines[i];
-        
-        // Type line
         for (let j = 0; j <= line.length; j++) {
           typewriterTextEl.innerText = line.substring(0, j);
-          await sleep(70 + Math.random() * 40);
+          await sleep(75 + Math.random() * 35);
         }
 
-        // Blink cursor x4
-        await sleep(1500);
+        await sleep(1400);
 
-        // Backspace if not the last line
         if (i < introLines.length - 1) {
           for (let j = line.length; j >= 0; j--) {
             typewriterTextEl.innerText = line.substring(0, j);
             await sleep(35);
           }
-          await sleep(300);
+          await sleep(350);
         }
       }
 
-      // Last line completed: hold cursor blink x4, then fade out intro text
       await sleep(1200);
       typewriterTextEl.classList.remove('blinking-cursor');
       introScreenEl.style.opacity = '0';
@@ -212,7 +196,6 @@
       await sleep(1000);
       introScreenEl.style.display = 'none';
 
-      // Transition to Dot Blinking
       startDotSequence();
     }
 
@@ -220,43 +203,56 @@
       return new Promise(resolve => setTimeout(resolve, ms));
     }
 
-    // --- MOON INITIALIZATION & AWAKENING ---
-    function startDotSequence() {
+    // --- CHILL MOON BLINK & AWAKENING ---
+    async function startDotSequence() {
       currentState = STATES.DOT_BLINKING;
       moon.x = width / 2;
       moon.y = height / 2;
-      moon.radius = 1.5;
+      moon.radius = 2;
       moon.opacity = 0;
 
-      let blinkCount = 0;
-      const blinkInterval = setInterval(() => {
-        moon.opacity = moon.opacity === 0 ? 0.9 : 0;
-        blinkCount++;
-        if (blinkCount >= 6) { // 3 blinks
-          clearInterval(blinkInterval);
-          startMoonAwakening();
+      // Smooth sine-wave pulse for 3 chill blinks
+      const blinkDuration = 3600; 
+      const startTime = performance.now();
+
+      await new Promise(resolve => {
+        function pulse(now) {
+          const elapsed = now - startTime;
+          if (elapsed < blinkDuration) {
+            // Smooth sine wave from 0 to 1 back to 0
+            const progress = elapsed / blinkDuration;
+            moon.opacity = Math.sin(progress * Math.PI * 3) * 0.85;
+            if (moon.opacity < 0) moon.opacity = 0;
+            requestAnimationFrame(pulse);
+          } else {
+            moon.opacity = 0.9;
+            resolve();
+          }
         }
-      }, 400);
+        requestAnimationFrame(pulse);
+      });
+
+      startMoonAwakening();
     }
 
     function startMoonAwakening() {
       currentState = STATES.MOON_AWAKENING;
       moon.opacity = 1;
-      moon.targetRadius = Math.min(width, height) * 0.12;
+      moon.targetRadius = Math.min(width, height) * 0.11;
       if (moon.targetRadius < 45) moon.targetRadius = 45;
-      if (moon.targetRadius > 90) moon.targetRadius = 90;
+      if (moon.targetRadius > 85) moon.targetRadius = 85;
 
-      // Expand Moon
+      // Chill expansion speed (3.5s)
       let startTime = null;
       function animateAwake(time) {
         if (!startTime) startTime = time;
-        let progress = (time - startTime) / 2500;
+        let progress = (time - startTime) / 3500;
         if (progress > 1) progress = 1;
 
-        // Smooth ease-out expansion
+        // Smooth Ease-Out-Cubic
         const ease = 1 - Math.pow(1 - progress, 3);
-        moon.radius = 1.5 + (moon.targetRadius - 1.5) * ease;
-        moon.glowOpacity = ease * 0.8;
+        moon.radius = 2 + (moon.targetRadius - 2) * ease;
+        moon.glowOpacity = ease * 0.75;
 
         if (progress < 1) {
           requestAnimationFrame(animateAwake);
@@ -267,50 +263,105 @@
       requestAnimationFrame(animateAwake);
     }
 
-    // --- STARS & LANTERNS GENERATION ---
     function initStars() {
       stars = [];
-      const count = Math.floor((width * height) / 3000);
+      const count = Math.floor((width * height) / 3500);
       for (let i = 0; i < count; i++) {
         stars.push({
           x: Math.random() * width,
-          y: Math.random() * height * 1.5, // Cover extended canvas
-          size: Math.random() * 1.5 + 0.5,
-          alpha: Math.random() * 0.8 + 0.2,
-          twinkleSpeed: Math.random() * 0.02 + 0.005
+          y: Math.random() * height * 1.5,
+          size: Math.random() * 1.4 + 0.4,
+          alpha: Math.random() * 0.7 + 0.2,
+          twinkleSpeed: Math.random() * 0.015 + 0.005
         });
       }
     }
     initStars();
 
+    // --- LANTERNS SYSTEM (THƯA + ĐẸP + BAY TỪ DƯỚI LÊN) ---
     function spawnLanterns() {
       lanterns = [];
-      const totalLanterns = 14;
-      for (let i = 0; i < totalLanterns; i++) {
+      // Thưa thớt: Chỉ duy trì tầm 4-6 đèn lồng rải rác
+      const maxLanternsOnScreen = 5;
+      for (let i = 0; i < maxLanternsOnScreen; i++) {
         setTimeout(() => {
           if (currentState === STATES.INTERACTIVE_SKY || currentState === STATES.WAITING_LANTERNS_CLEAR) {
-            lanterns.push(createLantern());
+            lanterns.push(createLantern(true));
           }
-        }, i * 600 + Math.random() * 300); // Staggered spawn delay
+        }, i * 2200 + Math.random() * 800); // Thưa nhịp delay
       }
     }
 
-    function createLantern() {
-      const scale = Math.random() * 0.4 + 0.6;
+    function createLantern(fromBottom = true) {
+      const scale = Math.random() * 0.35 + 0.65;
       return {
-        x: Math.random() * (width - 60) + 30,
-        y: height + Math.random() * 100 + 40,
-        speedY: Math.random() * 0.6 + 0.4,
-        swayAmplitude: Math.random() * 20 + 10,
-        swaySpeed: Math.random() * 0.02 + 0.01,
+        x: Math.random() * (width - 120) + 60,
+        // Bay từ bên dưới màn hình lên
+        y: fromBottom ? height + 60 + Math.random() * 80 : Math.random() * height,
+        speedY: Math.random() * 0.35 + 0.35, // Thong thả trôi
+        swayAmplitude: Math.random() * 15 + 10,
+        swaySpeed: Math.random() * 0.012 + 0.008,
         swayOffset: Math.random() * Math.PI * 2,
         scale: scale,
-        opacity: Math.random() * 0.3 + 0.7,
-        size: 24 * scale
+        opacity: Math.random() * 0.2 + 0.8,
+        size: 26 * scale,
+        flicker: Math.random() * Math.PI
       };
     }
 
-    // --- CARD TYPING & INTERACTION ---
+    function drawBeautifulLantern(ctx, l, timestamp) {
+      ctx.save();
+      ctx.globalAlpha = l.opacity;
+      ctx.translate(l.x, l.y);
+
+      const s = l.scale;
+      l.flicker += 0.05;
+      const glowPulse = Math.sin(l.flicker) * 0.15 + 0.85;
+
+      // 1. Soft Warm Glow
+      const lGlow = ctx.createRadialGradient(0, 0, 2, 0, 0, 32 * s);
+      lGlow.addColorStop(0, `rgba(251, 146, 60, ${0.75 * glowPulse})`);
+      lGlow.addColorStop(0.6, `rgba(245, 158, 11, ${0.25 * glowPulse})`);
+      lGlow.addColorStop(1, 'rgba(0, 0, 0, 0)');
+      ctx.fillStyle = lGlow;
+      ctx.beginPath();
+      ctx.arc(0, 0, 32 * s, 0, Math.PI * 2);
+      ctx.fill();
+
+      // 2. Tassel (Dải lụa đuôi lồng đèn đung đưa)
+      const swayTassel = Math.sin(timestamp * 0.002 + l.swayOffset) * 4;
+      ctx.strokeStyle = '#dc2626';
+      ctx.lineWidth = 1.5 * s;
+      ctx.beginPath();
+      ctx.moveTo(0, 16 * s);
+      ctx.quadraticCurveTo(swayTassel * 0.5, 26 * s, swayTassel, 34 * s);
+      ctx.stroke();
+
+      // 3. Main Lantern Body (Khung Tre Bo Góc)
+      const bodyGrad = ctx.createLinearGradient(-12 * s, 0, 12 * s, 0);
+      bodyGrad.addColorStop(0, '#ea580c');
+      bodyGrad.addColorStop(0.5, '#f97316');
+      bodyGrad.addColorStop(1, '#c2410c');
+
+      ctx.fillStyle = bodyGrad;
+      ctx.beginPath();
+      ctx.roundRect(-11 * s, -15 * s, 22 * s, 30 * s, 6 * s);
+      ctx.fill();
+
+      // Top & Bottom Wooden Caps
+      ctx.fillStyle = '#78350f';
+      ctx.fillRect(-9 * s, -17 * s, 18 * s, 2.5 * s);
+      ctx.fillRect(-9 * s, 15 * s, 18 * s, 2.5 * s);
+
+      // 4. Inner Candle Core
+      ctx.fillStyle = `rgba(254, 240, 138, ${glowPulse})`;
+      ctx.beginPath();
+      ctx.ellipse(0, 0, 5 * s, 8 * s, 0, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.restore();
+    }
+
     async function openGreetingCard(index) {
       activeCardOpen = true;
       cardModal.classList.remove('pointer-events-none');
@@ -330,7 +381,7 @@
         await sleep(35 + Math.random() * 20);
       }
 
-      await sleep(600);
+      await sleep(500);
       cardTextEl.classList.remove('blinking-cursor');
       cardFooter.classList.remove('opacity-0');
     }
@@ -343,21 +394,17 @@
       cardContainer.classList.remove('scale-100');
       cardContainer.classList.add('scale-95');
 
-      // Increment click state cleanly
       lanternClicks++;
 
-      // If clicked 3 lanterns, progress state after card closes
       if (lanternClicks >= LANTERN_LIMIT) {
         currentState = STATES.WAITING_LANTERNS_CLEAR;
       }
     }
 
-    cardModal.addEventListener('click', (e) => {
-      // Close card on clicking anywhere
+    cardModal.addEventListener('click', () => {
       closeGreetingCard();
     });
 
-    // --- EVENT LISTENERS (MOUSE/TOUCH) ---
     canvas.addEventListener('mousemove', (e) => {
       const rect = canvas.getBoundingClientRect();
       const mouseX = e.clientX - rect.left;
@@ -365,7 +412,7 @@
 
       if (currentState === STATES.MOON_AWAKENING || currentState === STATES.INTERACTIVE_SKY || currentState === STATES.MOON_GLOWING_UP) {
         const dist = Math.hypot(mouseX - moon.x, mouseY - moon.y);
-        moon.isHovered = dist < moon.radius * 1.3;
+        moon.isHovered = dist < moon.radius * 1.2;
       }
     });
 
@@ -376,51 +423,46 @@
       const mouseX = e.clientX - rect.left;
       const mouseY = e.clientY - rect.top - cameraOffsetY;
 
-      // Click Moon in AWAKENING state -> Enter INTERACTIVE_SKY
       if (currentState === STATES.MOON_AWAKENING) {
         const dist = Math.hypot(mouseX - moon.x, mouseY - moon.y);
-        if (dist < moon.radius * 1.5) {
+        if (dist < moon.radius * 1.4) {
           currentState = STATES.INTERACTIVE_SKY;
           spawnLanterns();
         }
       } 
-      // Click Lanterns
       else if (currentState === STATES.INTERACTIVE_SKY) {
         for (let i = lanterns.length - 1; i >= 0; i--) {
           const l = lanterns[i];
           const dist = Math.hypot(mouseX - l.x, mouseY - l.y);
-          if (dist < l.size * 1.5) {
-            // Remove clicked lantern and trigger card
+          if (dist < l.size * 1.6) {
             lanterns.splice(i, 1);
             openGreetingCard(lanternClicks);
             break;
           }
         }
       }
-      // Click Moon when ready for Outro (State MOON_GLOWING_UP)
       else if (currentState === STATES.MOON_GLOWING_UP) {
         const dist = Math.hypot(mouseX - moon.x, mouseY - moon.y);
-        if (dist < moon.radius * 1.5) {
+        if (dist < moon.radius * 1.4) {
           triggerOutroSequence();
         }
       }
     });
 
-    // --- OUTRO SEQUENCE TRANSITIONS ---
     async function triggerOutroSequence() {
       currentState = STATES.MOON_SHRINKING;
 
-      // Fast-settle shrink animation
+      // Chill Smooth Shrink (1.2s)
       const startR = moon.radius;
-      const targetR = 8;
+      const targetR = 9;
       let startTime = null;
 
       await new Promise(resolve => {
         function shrink(time) {
           if (!startTime) startTime = time;
-          let p = (time - startTime) / 800; // Fast 0.8s
+          let p = (time - startTime) / 1200;
           if (p > 1) p = 1;
-          const ease = p * p * p; // Fast start
+          const ease = 1 - Math.pow(1 - p, 3); // Ease-out
           moon.radius = startR - (startR - targetR) * ease;
           if (p < 1) requestAnimationFrame(shrink);
           else resolve();
@@ -428,10 +470,8 @@
         requestAnimationFrame(shrink);
       });
 
-      // Pause 5s silently
       await sleep(5000);
 
-      // Camera pan down 1/3 height
       currentState = STATES.CAMERA_PANNING;
       targetCameraOffsetY = -height * 0.28;
       
@@ -439,9 +479,9 @@
       await new Promise(resolve => {
         function pan(time) {
           if (!panStartTime) panStartTime = time;
-          let p = (time - panStartTime) / 3500; // Smooth 3.5s pan
+          let p = (time - panStartTime) / 3800;
           if (p > 1) p = 1;
-          const ease = 0.5 - Math.cos(p * Math.PI) / 2; // Ease in-out
+          const ease = 0.5 - Math.cos(p * Math.PI) / 2;
           cameraOffsetY = targetCameraOffsetY * ease;
           if (p < 1) requestAnimationFrame(pan);
           else resolve();
@@ -449,40 +489,34 @@
         requestAnimationFrame(pan);
       });
 
-      // Pause 2s showing silhouettes
       await sleep(2000);
 
-      // Start 10s Fireworks Show
       currentState = STATES.FIREWORKS_SHOW;
       const fireworkInterval = setInterval(() => {
         if (currentState === STATES.FIREWORKS_SHOW) {
           launchRandomFirework();
         }
-      }, 700);
+      }, 750);
 
       await sleep(10000);
       clearInterval(fireworkInterval);
 
-      // 3s Quiet Pause
       currentState = STATES.FIREWORKS_PAUSE;
       await sleep(3000);
 
-      // Love Forever Grand Burst
       currentState = STATES.LOVE_FOREVER_BURST;
       launchLoveForeverBurst();
 
       await sleep(5000);
 
-      // Ending Screen Fade In
       currentState = STATES.ENDING_TEXT;
       endingText1.style.opacity = '1';
-      await sleep(3000);
+      await sleep(3200);
       endingText1.style.opacity = '0';
       await sleep(1500);
       endingText2.style.opacity = '1';
     }
 
-    // --- FIREWORKS & PARTICLE PHYSICS ---
     function launchRandomFirework() {
       const startX = width * 0.2 + Math.random() * width * 0.6;
       const targetY = height * 0.15 + Math.random() * height * 0.25 - cameraOffsetY;
@@ -492,17 +526,17 @@
         x: startX,
         y: height - cameraOffsetY,
         targetY: targetY,
-        speed: Math.random() * 3 + 7,
+        speed: Math.random() * 2.5 + 6.5,
         color: colors[Math.floor(Math.random() * colors.length)],
         exploded: false
       });
     }
 
     function createExplosion(x, y, color) {
-      const particleCount = 60;
+      const particleCount = 55;
       for (let i = 0; i < particleCount; i++) {
         const angle = (Math.PI * 2 / particleCount) * i + Math.random() * 0.2;
-        const speed = Math.random() * 5 + 2;
+        const speed = Math.random() * 4.5 + 1.8;
         particles.push({
           x: x,
           y: y,
@@ -510,20 +544,19 @@
           vy: Math.sin(angle) * speed,
           color: color,
           alpha: 1,
-          decay: Math.random() * 0.015 + 0.01,
-          gravity: 0.08
+          decay: Math.random() * 0.014 + 0.009,
+          gravity: 0.07
         });
       }
     }
 
     function launchLoveForeverBurst() {
-      // Launch multiple rockets in unison
       for (let i = -3; i <= 3; i++) {
         fireworks.push({
           x: width / 2 + i * 40,
           y: height - cameraOffsetY,
           targetY: height * 0.22 - cameraOffsetY,
-          speed: 9,
+          speed: 8.5,
           color: '#fef08a',
           exploded: false,
           isTextRocket: i === 0
@@ -532,14 +565,13 @@
     }
 
     function createTextParticles(cx, cy) {
-      // Offscreen canvas to sample text "LOVE FOREVER"
       const tCanvas = document.createElement('canvas');
       const tCtx = tCanvas.getContext('2d');
       tCanvas.width = 800;
       tCanvas.height = 200;
       
       tCtx.fillStyle = '#ffffff';
-      tCtx.font = 'bold 70px "Quicksand", sans-serif';
+      tCtx.font = 'bold 68px "Quicksand", sans-serif';
       tCtx.textAlign = 'center';
       tCtx.textBaseline = 'middle';
       tCtx.fillText('LOVE FOREVER', 400, 100);
@@ -547,7 +579,6 @@
       const imgData = tCtx.getImageData(0, 0, 800, 200);
       const data = imgData.data;
 
-      // Sample pixels to form particles
       const step = 6;
       for (let y = 0; y < 200; y += step) {
         for (let x = 0; x < 800; x += step) {
@@ -565,8 +596,8 @@
               vy: (py - cy) * 0.08 + (Math.random() - 0.5) * 2,
               color: '#fef08a',
               alpha: 1,
-              decay: 0.006,
-              gravity: 0.015,
+              decay: 0.0055,
+              gravity: 0.012,
               isText: true
             });
           }
@@ -574,35 +605,34 @@
       }
     }
 
-    // --- MAIN RENDER LOOP ---
     function render(timestamp) {
       ctx.clearRect(0, 0, width, height);
 
-      // Save context for camera pan
       ctx.save();
       ctx.translate(0, cameraOffsetY);
 
-      // 1. Draw Stars
+      // Stars
       for (let s of stars) {
-        s.alpha += Math.sin(timestamp * s.twinkleSpeed) * 0.01;
+        s.alpha += Math.sin(timestamp * s.twinkleSpeed) * 0.008;
         ctx.fillStyle = `rgba(255, 255, 255, ${Math.max(0.1, Math.min(1, s.alpha))})`;
         ctx.beginPath();
         ctx.arc(s.x, s.y, s.size, 0, Math.PI * 2);
         ctx.fill();
       }
 
-      // 2. Draw Moon
+      // Moon
       if (moon.opacity > 0) {
         ctx.save();
         
-        // Hover dynamics
-        const currentR = moon.isHovered ? moon.radius * 1.08 : moon.radius;
+        const currentR = moon.isHovered ? moon.radius * 1.06 : moon.radius;
 
-        // Moon Glow
-        const glowRadius = currentR * (currentState === STATES.MOON_GLOWING_UP ? 3.5 : 2.2);
-        const glowGradient = ctx.createRadialGradient(moon.x, moon.y, currentR * 0.5, moon.x, moon.y, glowRadius);
-        glowGradient.addColorStop(0, `rgba(254, 240, 138, ${moon.glowOpacity})`);
-        glowGradient.addColorStop(0.5, `rgba(253, 224, 71, ${moon.glowOpacity * 0.3})`);
+        // Smooth Breathing Glow
+        const breathGlow = Math.sin(timestamp * 0.0015) * 0.1 + 0.9;
+        const glowRadius = currentR * (currentState === STATES.MOON_GLOWING_UP ? 3.6 : 2.3) * breathGlow;
+        
+        const glowGradient = ctx.createRadialGradient(moon.x, moon.y, currentR * 0.4, moon.x, moon.y, glowRadius);
+        glowGradient.addColorStop(0, `rgba(254, 240, 138, ${moon.glowOpacity * 0.85})`);
+        glowGradient.addColorStop(0.5, `rgba(253, 224, 71, ${moon.glowOpacity * 0.25})`);
         glowGradient.addColorStop(1, 'rgba(0, 0, 0, 0)');
 
         ctx.fillStyle = glowGradient;
@@ -610,17 +640,17 @@
         ctx.arc(moon.x, moon.y, glowRadius, 0, Math.PI * 2);
         ctx.fill();
 
-        // Moon Solid
+        // Moon Disk
         const moonGradient = ctx.createRadialGradient(
-          moon.x - currentR * 0.3, 
-          moon.y - currentR * 0.3, 
+          moon.x - currentR * 0.28, 
+          moon.y - currentR * 0.28, 
           currentR * 0.1, 
           moon.x, 
           moon.y, 
           currentR
         );
         moonGradient.addColorStop(0, '#ffffff');
-        moonGradient.addColorStop(0.75, '#fef08a');
+        moonGradient.addColorStop(0.7, '#fef08a');
         moonGradient.addColorStop(1, '#fde047');
 
         ctx.fillStyle = moonGradient;
@@ -631,67 +661,40 @@
         ctx.restore();
       }
 
-      // 3. Draw Lanterns
+      // Lanterns
       if (currentState === STATES.INTERACTIVE_SKY || currentState === STATES.WAITING_LANTERNS_CLEAR) {
         for (let i = lanterns.length - 1; i >= 0; i--) {
           const l = lanterns[i];
           l.y -= l.speedY;
-          l.x += Math.sin(timestamp * l.swaySpeed + l.swayOffset) * 0.5;
+          l.x += Math.sin(timestamp * l.swaySpeed + l.swayOffset) * 0.4;
 
-          // Render Lantern
-          ctx.save();
-          ctx.globalAlpha = l.opacity;
-          ctx.translate(l.x, l.y);
+          drawBeautifulLantern(ctx, l, timestamp);
 
-          // Lantern Glow
-          const lGlow = ctx.createRadialGradient(0, 0, 2, 0, 0, l.size * 1.8);
-          lGlow.addColorStop(0, 'rgba(251, 146, 60, 0.8)');
-          lGlow.addColorStop(1, 'rgba(0, 0, 0, 0)');
-          ctx.fillStyle = lGlow;
-          ctx.beginPath();
-          ctx.arc(0, 0, l.size * 1.8, 0, Math.PI * 2);
-          ctx.fill();
-
-          // Lantern Body
-          ctx.fillStyle = '#f97316';
-          ctx.beginPath();
-          ctx.roundRect(-l.size * 0.5, -l.size * 0.65, l.size, l.size * 1.3, 6);
-          ctx.fill();
-
-          // Inner Light
-          ctx.fillStyle = '#fef08a';
-          ctx.beginPath();
-          ctx.arc(0, 0, l.size * 0.3, 0, Math.PI * 2);
-          ctx.fill();
-
-          ctx.restore();
-
-          // Recycle/Remove offscreen lanterns
-          if (l.y < -50) {
+          // Recycle from bottom
+          if (l.y < -60) {
             if (currentState === STATES.INTERACTIVE_SKY) {
-              lanterns[i] = createLantern();
+              lanterns[i] = createLantern(true);
             } else {
               lanterns.splice(i, 1);
             }
           }
         }
 
-        // Check if all lanterns cleared in WAITING state
         if (currentState === STATES.WAITING_LANTERNS_CLEAR && lanterns.length === 0) {
           currentState = STATES.MOON_GLOWING_UP;
           moon.glowOpacity = 1;
         }
       }
 
-      // 4. Draw Fireworks & Particles
+      // Fireworks
       for (let i = fireworks.length - 1; i >= 0; i--) {
         const fw = fireworks[i];
         fw.y -= fw.speed;
 
         ctx.strokeStyle = fw.color;
-        ctx.lineWidth = 2;
+        ctx.lineWidth = 1.8;
         ctx.beginPath();
-        ctx.moveTo(fw.x, fw.y + 10);
+        ctx.moveTo(fw.x, fw.y + 8);
         ctx.lineTo(fw.x, fw.y);
         ctx.stroke();
 
@@ -715,7 +718,7 @@
         ctx.fillStyle = p.color;
         ctx.globalAlpha = Math.max(0, p.alpha);
         ctx.beginPath();
-        ctx.arc(p.x, p.y, p.isText ? 1.8 : 2.2, 0, Math.PI * 2);
+        ctx.arc(p.x, p.y, p.isText ? 1.8 : 2.1, 0, Math.PI * 2);
         ctx.fill();
 
         if (p.alpha <= 0) {
@@ -723,37 +726,35 @@
         }
       }
 
-      // 5. Draw Silhouettes (Revealed after camera pan)
+      // Silhouettes
       if (cameraOffsetY < 0) {
         ctx.save();
         const baseGroundY = height + Math.abs(targetCameraOffsetY) - 10;
 
-        // Hill slope
         ctx.fillStyle = '#020617';
         ctx.beginPath();
         ctx.ellipse(width / 2, baseGroundY + 120, width * 0.7, 160, 0, Math.PI, 0);
         ctx.fill();
 
-        // Two Silhouettes Sitting Together
         const centerX = width / 2;
         const groundY = baseGroundY - 20;
 
-        ctx.fillStyle = '#090d16';
+        ctx.fillStyle = '#080d1a';
 
-        // Person 1 (Left - Head & Torso leaning right)
+        // Person 1
         ctx.beginPath();
-        ctx.arc(centerX - 16, groundY - 42, 10, 0, Math.PI * 2); // Head
+        ctx.arc(centerX - 16, groundY - 42, 10, 0, Math.PI * 2);
         ctx.fill();
         ctx.beginPath();
-        ctx.ellipse(centerX - 14, groundY - 18, 14, 22, 0.15, 0, Math.PI * 2); // Body
+        ctx.ellipse(centerX - 14, groundY - 18, 14, 22, 0.15, 0, Math.PI * 2);
         ctx.fill();
 
-        // Person 2 (Right - Head leaning on Person 1 shoulder)
+        // Person 2
         ctx.beginPath();
-        ctx.arc(centerX + 6, groundY - 38, 9, 0, Math.PI * 2); // Head
+        ctx.arc(centerX + 6, groundY - 38, 9, 0, Math.PI * 2);
         ctx.fill();
         ctx.beginPath();
-        ctx.ellipse(centerX + 8, groundY - 16, 13, 20, -0.1, 0, Math.PI * 2); // Body
+        ctx.ellipse(centerX + 8, groundY - 16, 13, 20, -0.1, 0, Math.PI * 2);
         ctx.fill();
 
         ctx.restore();
@@ -763,7 +764,6 @@
       requestAnimationFrame(render);
     }
 
-    // Start App Sequence
     window.onload = () => {
       runIntroTypewriter();
       requestAnimationFrame(render);
