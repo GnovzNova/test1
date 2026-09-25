@@ -1109,5 +1109,1403 @@ function updateMoonHover(dt) {
 
 /* =========================================================
    CARD
-=================================
+========================================================= */
+
+const cardModal =
+    document.getElementById("cardModal");
+
+const cardText =
+    document.getElementById("cardText");
+
+const cardHint =
+    document.getElementById("cardHint");
+
+
+async function openCard(index) {
+
+    if (activeCard) return;
+
+    activeCard = true;
+
+    cardText.textContent = "";
+    cardHint.classList.remove("show");
+
+    cardModal.classList.add("open");
+
+    await sleep(650);
+
+    cardText.classList.add("type-cursor");
+
+    const message =
+        GREETINGS[index];
+
+    for (
+        let i = 0;
+        i <= message.length;
+        i++
+    ) {
+
+        if (!activeCard) return;
+
+        cardText.textContent =
+            message.substring(0, i);
+
+        await sleep(
+            message[i] === "\n"
+                ? 90
+                : random(28, 48)
+        );
+    }
+
+    /*
+        Cursor remains blinking
+        3–5 times.
+    */
+
+    await sleep(2400);
+
+    cardText.classList.remove(
+        "type-cursor"
+    );
+
+    cardHint.classList.add("show");
+}
+
+
+function closeCard() {
+
+    if (!activeCard) return;
+
+    activeCard = false;
+
+    cardModal.classList.remove("open");
+
+    /*
+        Only when the card is actually closed
+        do we increase the click count.
+    */
+
+    lanternClicks++;
+
+    if (lanternClicks >= LANTERN_LIMIT) {
+
+        state =
+            STATES.WAIT_LANTERNS;
+    }
+}
+
+
+cardModal.addEventListener("click", e => {
+
+    /*
+        Clicking outside the card closes it.
+    */
+
+    if (e.target === cardModal) {
+        closeCard();
+    }
+});
+
+
+/* =========================================================
+   CLICK HANDLER
+========================================================= */
+
+canvas.addEventListener("click", e => {
+
+    if (activeCard) return;
+
+    const x = e.clientX;
+
+    const y =
+        e.clientY -
+        cameraOffsetY;
+
+
+    /* -------------------------------------
+       FIRST MOON
+    ------------------------------------- */
+
+    if (
+        state === STATES.MOON_APPEAR ||
+        state === STATES.SKY
+    ) {
+
+        const d =
+            Math.hypot(
+                x - moon.x,
+                y - moon.y
+            );
+
+        if (
+            d <
+            moon.radius * 1.5
+        ) {
+
+            /*
+                Moon has been clicked.
+
+                From now on its hover effect
+                can NEVER return.
+            */
+
+            moon.hoverLocked = true;
+            moon.hover = false;
+            moon.hoverAmount = 0;
+
+            state = STATES.SKY;
+
+            return;
+        }
+    }
+
+
+    /* -------------------------------------
+       LANTERNS
+    ------------------------------------- */
+
+    if (state === STATES.SKY) {
+
+        for (
+            let i = lanterns.length - 1;
+            i >= 0;
+            i--
+        ) {
+
+            const l =
+                lanterns[i];
+
+            const d =
+                Math.hypot(
+                    x - l.x,
+                    y - l.y
+                );
+
+            if (
+                d <
+                l.size * .95
+            ) {
+
+                lanterns.splice(i, 1);
+
+                openCard(
+                    lanternClicks
+                );
+
+                return;
+            }
+        }
+    }
+
+
+    /* -------------------------------------
+       FINAL MOON
+    ------------------------------------- */
+
+    if (state === STATES.MOON_READY) {
+
+        const d =
+            Math.hypot(
+                x - moon.x,
+                y - moon.y
+            );
+
+        if (
+            d <
+            moon.radius * 1.5
+        ) {
+
+            moon.hoverLocked = true;
+
+            triggerOutro();
+
+            return;
+        }
+    }
+});
+
+
+/* =========================================================
+   FINAL MOON GLOW
+========================================================= */
+
+async function startMoonReady() {
+
+    state =
+        STATES.MOON_READY;
+
+    moon.glow = .25;
+
+    const startGlow =
+        moon.glow;
+
+    const start =
+        performance.now();
+
+    /*
+        Very slow final illumination.
+    */
+
+    await new Promise(resolve => {
+
+        function animate(now) {
+
+            const p =
+                clamp(
+                    (now - start) / 4800,
+                    0,
+                    1
+                );
+
+            const e =
+                easeInOut(p);
+
+            moon.glow =
+                lerp(
+                    startGlow,
+                    1,
+                    e
+                );
+
+            if (p < 1) {
+
+                requestAnimationFrame(
+                    animate
+                );
+
+            } else {
+
+                resolve();
+            }
+        }
+
+        requestAnimationFrame(
+            animate
+        );
+    });
+}
+
+
+/* =========================================================
+   OUTRO
+========================================================= */
+
+async function triggerOutro() {
+
+    state =
+        STATES.MOON_SHRINK;
+
+    const startRadius =
+        moon.radius;
+
+    const endRadius = 8;
+
+    const start =
+        performance.now();
+
+    /*
+        Slow cinematic shrink.
+    */
+
+    await new Promise(resolve => {
+
+        function animate(now) {
+
+            const p =
+                clamp(
+                    (now - start) / 1800,
+                    0,
+                    1
+                );
+
+            const e =
+                easeInOut(p);
+
+            moon.radius =
+                lerp(
+                    startRadius,
+                    endRadius,
+                    e
+                );
+
+            moon.glow =
+                lerp(
+                    moon.glow,
+                    .15,
+                    e
+                );
+
+            if (p < 1) {
+
+                requestAnimationFrame(
+                    animate
+                );
+
+            } else {
+
+                resolve();
+            }
+        }
+
+        requestAnimationFrame(
+            animate
+        );
+    });
+
+
+    /* ORIGINAL 5 SECOND PAUSE */
+
+    await sleep(5000);
+
+
+    /* CAMERA */
+
+    state =
+        STATES.CAMERA;
+
+    targetCameraOffsetY =
+        -H * .28;
+
+    const cameraStart =
+        performance.now();
+
+    await new Promise(resolve => {
+
+        function animate(now) {
+
+            const p =
+                clamp(
+                    (now - cameraStart) / 3500,
+                    0,
+                    1
+                );
+
+            const e =
+                easeInOut(p);
+
+            cameraOffsetY =
+                targetCameraOffsetY * e;
+
+            if (p < 1) {
+
+                requestAnimationFrame(
+                    animate
+                );
+
+            } else {
+
+                resolve();
+            }
+        }
+
+        requestAnimationFrame(
+            animate
+        );
+    });
+
+
+    /* ORIGINAL 2 SECOND PAUSE */
+
+    await sleep(2000);
+
+
+    /* FIREWORKS */
+
+    startFireworks();
+}
+
+
+/* =========================================================
+   FIREWORKS
+   GIỮ NGUYÊN FLOW CUỐI
+========================================================= */
+
+let rockets = [];
+let particles = [];
+
+
+const FIREWORK_COLORS = [
+    "#fde047",
+    "#f43f5e",
+    "#38bdf8",
+    "#a855f7",
+    "#34d399",
+    "#fb923c"
+];
+
+
+function launchFirework() {
+
+    rockets.push({
+
+        x:
+            W * .2 +
+            Math.random() * W * .6,
+
+        y:
+            H -
+            cameraOffsetY,
+
+        targetY:
+            H * .15 +
+            Math.random() * H * .25 -
+            cameraOffsetY,
+
+        speed:
+            random(7, 10),
+
+        color:
+            FIREWORK_COLORS[
+                Math.floor(
+                    Math.random() *
+                    FIREWORK_COLORS.length
+                )
+            ]
+    });
+}
+
+
+function explode(x, y, color) {
+
+    const count = 60;
+
+    for (
+        let i = 0;
+        i < count;
+        i++
+    ) {
+
+        const angle =
+            (Math.PI * 2 / count) * i +
+            random(-.08, .08);
+
+        const speed =
+            random(2.2, 7);
+
+        particles.push({
+
+            x,
+            y,
+
+            vx:
+                Math.cos(angle) *
+                speed,
+
+            vy:
+                Math.sin(angle) *
+                speed,
+
+            gravity: .08,
+
+            drag: .985,
+
+            alpha: 1,
+
+            decay:
+                random(.009, .017),
+
+            color
+        });
+    }
+}
+
+
+function updateFireworks(dt) {
+
+    /* rockets */
+
+    for (
+        let i = rockets.length - 1;
+        i >= 0;
+        i--
+    ) {
+
+        const r =
+            rockets[i];
+
+        r.y -= r.speed;
+
+        ctx.strokeStyle =
+            r.color;
+
+        ctx.globalAlpha = .75;
+
+        ctx.lineWidth = 1.4;
+
+        ctx.beginPath();
+
+        ctx.moveTo(
+            r.x,
+            r.y + 14
+        );
+
+        ctx.lineTo(
+            r.x,
+            r.y
+        );
+
+        ctx.stroke();
+
+        if (
+            r.y <= r.targetY
+        ) {
+
+            explode(
+                r.x,
+                r.y,
+                r.color
+            );
+
+            rockets.splice(i, 1);
+        }
+    }
+
+
+    /* particles */
+
+    for (
+        let i = particles.length - 1;
+        i >= 0;
+        i--
+    ) {
+
+        const p =
+            particles[i];
+
+        p.vx *= p.drag;
+        p.vy *= p.drag;
+
+        p.x += p.vx;
+        p.y += p.vy;
+
+        p.vy += p.gravity;
+
+        p.alpha -= p.decay;
+
+        if (p.alpha <= 0) {
+
+            particles.splice(i, 1);
+
+            continue;
+        }
+
+        ctx.globalAlpha =
+            p.alpha;
+
+        ctx.fillStyle =
+            p.color;
+
+        ctx.beginPath();
+
+        ctx.arc(
+            p.x,
+            p.y,
+            1.7,
+            0,
+            Math.PI * 2
+        );
+
+        ctx.fill();
+    }
+
+    ctx.globalAlpha = 1;
+}
+
+
+/* =========================================================
+   LOVE FOREVER
+========================================================= */
+
+function createLoveTextParticles(cx, cy) {
+
+    const off =
+        document.createElement("canvas");
+
+    off.width = 900;
+    off.height = 220;
+
+    const c =
+        off.getContext("2d");
+
+    c.fillStyle = "white";
+
+    c.font =
+        "bold 78px Quicksand";
+
+    c.textAlign = "center";
+    c.textBaseline = "middle";
+
+    c.fillText(
+        "LOVE FOREVER",
+        450,
+        110
+    );
+
+    const data =
+        c.getImageData(
+            0,
+            0,
+            900,
+            220
+        ).data;
+
+    const step = 6;
+
+    for (
+        let y = 0;
+        y < 220;
+        y += step
+    ) {
+
+        for (
+            let x = 0;
+            x < 900;
+            x += step
+        ) {
+
+            const index =
+                (y * 900 + x) * 4;
+
+            if (
+                data[index + 3] >
+                150
+            ) {
+
+                const targetX =
+                    cx +
+                    (x - 450) *
+                    (W < 650 ? .72 : 1);
+
+                const targetY =
+                    cy +
+                    (y - 110) *
+                    (W < 650 ? .72 : 1);
+
+                particles.push({
+
+                    x: cx,
+                    y: cy,
+
+                    vx:
+                        random(-2, 2),
+
+                    vy:
+                        random(-2, 2),
+
+                    targetX,
+                    targetY,
+
+                    alpha: 1,
+
+                    decay: .004,
+
+                    color:
+                        "#fef08a",
+
+                    isText: true
+                });
+            }
+        }
+    }
+}
+
+
+function updateLoveParticles() {
+
+    for (
+        let i = particles.length - 1;
+        i >= 0;
+        i--
+    ) {
+
+        const p =
+            particles[i];
+
+        if (p.isText) {
+
+            p.x +=
+                (p.targetX - p.x) *
+                .065;
+
+            p.y +=
+                (p.targetY - p.y) *
+                .065;
+
+            p.alpha -=
+                p.decay;
+
+        } else {
+
+            p.vx *= .985;
+
+            p.x += p.vx;
+
+            p.y += p.vy;
+
+            p.vy += .08;
+
+            p.alpha -=
+                p.decay;
+        }
+
+        if (
+            p.alpha <= 0
+        ) {
+
+            particles.splice(i, 1);
+
+            continue;
+        }
+
+        ctx.globalAlpha =
+            p.alpha;
+
+        ctx.fillStyle =
+            p.color;
+
+        ctx.beginPath();
+
+        ctx.arc(
+            p.x,
+            p.y,
+            p.isText ? 1.8 : 1.7,
+            0,
+            Math.PI * 2
+        );
+
+        ctx.fill();
+    }
+
+    ctx.globalAlpha = 1;
+}
+
+
+/* =========================================================
+   SILHOUETTES
+   GIỮ NGUYÊN PHONG CÁCH ĐOẠN CUỐI
+========================================================= */
+
+function drawSilhouettes() {
+
+    if (
+        cameraOffsetY >= -20
+    ) return;
+
+    const baseGroundY =
+        H +
+        Math.abs(
+            targetCameraOffsetY
+        ) -
+        10;
+
+    ctx.save();
+
+    /* hill */
+
+    ctx.fillStyle =
+        "rgba(1,4,10,.94)";
+
+    ctx.beginPath();
+
+    ctx.ellipse(
+        W * .5,
+        baseGroundY,
+        W * .72,
+        H * .20,
+        0,
+        Math.PI,
+        0
+    );
+
+    ctx.fill();
+
+
+    const groundY =
+        baseGroundY - 20;
+
+    const cx =
+        W * .5;
+
+    const scale =
+        clamp(
+            W / 900,
+            .62,
+            1
+        );
+
+
+    ctx.fillStyle =
+        "#02040a";
+
+    ctx.strokeStyle =
+        "#02040a";
+
+    ctx.lineCap =
+        "round";
+
+
+    /* Person 1 */
+
+    ctx.beginPath();
+
+    ctx.arc(
+        cx - 27 * scale,
+        groundY - 73 * scale,
+        13 * scale,
+        0,
+        Math.PI * 2
+    );
+
+    ctx.fill();
+
+
+    ctx.beginPath();
+
+    ctx.ellipse(
+        cx - 28 * scale,
+        groundY - 40 * scale,
+        19 * scale,
+        30 * scale,
+        -.08,
+        0,
+        Math.PI * 2
+    );
+
+    ctx.fill();
+
+
+    /* Person 2 */
+
+    ctx.beginPath();
+
+    ctx.arc(
+        cx + 25 * scale,
+        groundY - 70 * scale,
+        12 * scale,
+        0,
+        Math.PI * 2
+    );
+
+    ctx.fill();
+
+
+    ctx.beginPath();
+
+    ctx.ellipse(
+        cx + 27 * scale,
+        groundY - 38 * scale,
+        18 * scale,
+        29 * scale,
+        .08,
+        0,
+        Math.PI * 2
+    );
+
+    ctx.fill();
+
+
+    /* connected shoulders */
+
+    ctx.lineWidth =
+        14 * scale;
+
+    ctx.beginPath();
+
+    ctx.moveTo(
+        cx - 15 * scale,
+        groundY - 57 * scale
+    );
+
+    ctx.quadraticCurveTo(
+        cx,
+        groundY - 66 * scale,
+        cx + 14 * scale,
+        groundY - 55 * scale
+    );
+
+    ctx.stroke();
+
+
+    /* legs */
+
+    ctx.lineWidth =
+        11 * scale;
+
+
+    ctx.beginPath();
+
+    ctx.moveTo(
+        cx - 35 * scale,
+        groundY - 16 * scale
+    );
+
+    ctx.lineTo(
+        cx - 54 * scale,
+        groundY + 5 * scale
+    );
+
+    ctx.stroke();
+
+
+    ctx.beginPath();
+
+    ctx.moveTo(
+        cx - 21 * scale,
+        groundY - 15 * scale
+    );
+
+    ctx.lineTo(
+        cx - 4 * scale,
+        groundY + 6 * scale
+    );
+
+    ctx.stroke();
+
+
+    ctx.beginPath();
+
+    ctx.moveTo(
+        cx + 17 * scale,
+        groundY - 14 * scale
+    );
+
+    ctx.lineTo(
+        cx + 2 * scale,
+        groundY + 7 * scale
+    );
+
+    ctx.stroke();
+
+
+    ctx.beginPath();
+
+    ctx.moveTo(
+        cx + 34 * scale,
+        groundY - 15 * scale
+    );
+
+    ctx.lineTo(
+        cx + 52 * scale,
+        groundY + 6 * scale
+    );
+
+    ctx.stroke();
+
+
+    ctx.restore();
+}
+
+
+/* =========================================================
+   START FIREWORKS
+========================================================= */
+
+async function startFireworks() {
+
+    state =
+        STATES.FIREWORKS;
+
+    const interval =
+        setInterval(() => {
+
+            if (
+                state === STATES.FIREWORKS
+            ) {
+
+                launchFirework();
+            }
+
+        }, 700);
+
+
+    /* 10 SECOND SHOW */
+
+    await sleep(10000);
+
+    clearInterval(interval);
+
+    state =
+        STATES.FIREWORKS_PAUSE;
+
+
+    /*
+        Stop launching.
+        Existing particles naturally fade.
+    */
+
+    await sleep(3000);
+
+
+    state =
+        STATES.LOVE_FOREVER;
+
+
+    /*
+        Several rockets rise together.
+    */
+
+    for (
+        let i = -3;
+        i <= 3;
+        i++
+    ) {
+
+        setTimeout(() => {
+
+            rockets.push({
+
+                x:
+                    W / 2 +
+                    i * 42,
+
+                y:
+                    H -
+                    cameraOffsetY,
+
+                targetY:
+                    H * .22 -
+                    cameraOffsetY,
+
+                speed: 9,
+
+                color:
+                    "#fef08a",
+
+                isLove:
+                    true
+            });
+
+        }, Math.abs(i) * 80);
+    }
+
+
+    /*
+        Wait for rockets to reach sky,
+        then form LOVE FOREVER.
+    */
+
+    setTimeout(() => {
+
+        const cx =
+            W / 2;
+
+        const cy =
+            H * .22 -
+            cameraOffsetY;
+
+        createLoveTextParticles(
+            cx,
+            cy
+        );
+
+    }, 1500);
+
+
+    await sleep(5500);
+
+
+    /* ENDING */
+
+    state =
+        STATES.ENDING;
+
+    const ending =
+        document.getElementById(
+            "ending"
+        );
+
+    const ending1 =
+        document.getElementById(
+            "ending1"
+        );
+
+    const ending2 =
+        document.getElementById(
+            "ending2"
+        );
+
+    ending.style.opacity = "1";
+
+    ending1.style.transition =
+        "opacity 1800ms ease";
+
+    ending1.style.opacity = "1";
+
+    await sleep(3600);
+
+    ending1.style.opacity = "0";
+
+    await sleep(1700);
+
+    ending2.style.transition =
+        "opacity 1800ms ease";
+
+    ending2.style.opacity = "1";
+
+    await sleep(4500);
+
+    ending2.style.opacity = "0";
+}
+
+
+/* =========================================================
+   RENDER
+========================================================= */
+
+let lastTime =
+    performance.now();
+
+function render(now) {
+
+    const dt =
+        Math.min(
+            (now - lastTime) / 1000,
+            .033
+        );
+
+    lastTime = now;
+
+
+    /* background */
+
+    const gradient =
+        ctx.createLinearGradient(
+            0,
+            0,
+            0,
+            H
+        );
+
+    gradient.addColorStop(
+        0,
+        "#02030a"
+    );
+
+    gradient.addColorStop(
+        .55,
+        "#050817"
+    );
+
+    gradient.addColorStop(
+        1,
+        "#010207"
+    );
+
+    ctx.fillStyle =
+        gradient;
+
+    ctx.fillRect(
+        0,
+        0,
+        W,
+        H
+    );
+
+
+    /* CAMERA WORLD */
+
+    ctx.save();
+
+    ctx.translate(
+        0,
+        cameraOffsetY
+    );
+
+
+    /* stars */
+
+    for (const s of stars) {
+
+        const twinkle =
+            .72 +
+            Math.sin(
+                now * .001 * s.twinkle +
+                s.phase
+            ) * .22;
+
+        ctx.globalAlpha =
+            s.alpha * twinkle;
+
+        ctx.fillStyle =
+            "#fff";
+
+        ctx.beginPath();
+
+        ctx.arc(
+            s.x,
+            s.y,
+            s.radius,
+            0,
+            Math.PI * 2
+        );
+
+        ctx.fill();
+    }
+
+    ctx.globalAlpha = 1;
+
+
+    /* moon */
+
+    drawMoon();
+
+
+    /* lanterns */
+
+    if (
+        state === STATES.SKY ||
+        state === STATES.WAIT_LANTERNS
+    ) {
+
+        updateLanterns(dt);
+    }
+
+
+    /* silhouettes */
+
+    drawSilhouettes();
+
+
+    /* fireworks */
+
+    if (
+        state === STATES.FIREWORKS ||
+        state === STATES.FIREWORKS_PAUSE
+    ) {
+
+        updateFireworks(dt);
+    }
+
+
+    if (
+        state === STATES.LOVE_FOREVER
+    ) {
+
+        /*
+            Existing rockets still need
+            to travel upward.
+        */
+
+        for (
+            let i = rockets.length - 1;
+            i >= 0;
+            i--
+        ) {
+
+            const r =
+                rockets[i];
+
+            r.y -= r.speed;
+
+            ctx.globalAlpha = .8;
+
+            ctx.strokeStyle =
+                r.color;
+
+            ctx.lineWidth = 1.5;
+
+            ctx.beginPath();
+
+            ctx.moveTo(
+                r.x,
+                r.y + 15
+            );
+
+            ctx.lineTo(
+                r.x,
+                r.y
+            );
+
+            ctx.stroke();
+
+            if (
+                r.y <= r.targetY
+            ) {
+
+                explode(
+                    r.x,
+                    r.y,
+                    r.color
+                );
+
+                rockets.splice(
+                    i,
+                    1
+                );
+            }
+        }
+
+        updateLoveParticles();
+    }
+
+
+    ctx.restore();
+
+
+    updateMoonHover(dt);
+
+
+    requestAnimationFrame(
+        render
+    );
+}
+
+
+/* =========================================================
+   RESET FUNCTION
+========================================================= */
+
+function resetToIntro() {
+
+    /*
+        This is the required reset:
+
+        lanternClicks = 0
+    */
+
+    lanternClicks = 0;
+
+    lanterns = [];
+    rockets = [];
+    particles = [];
+
+    cameraOffsetY = 0;
+    targetCameraOffsetY = 0;
+
+    document.getElementById(
+        "intro"
+    ).style.display = "flex";
+
+    document.getElementById(
+        "intro"
+    ).style.opacity = "1";
+
+    cardModal.classList.remove(
+        "open"
+    );
+
+    activeCard = false;
+
+    runIntro();
+}
+
+
+/* =========================================================
+   INITIALIZE
+========================================================= */
+
+resize();
+
+resetMoon();
+
+runIntro();
+
+requestAnimationFrame(
+    render
+);
+
+</script>
+
+</body>
+</html>
 ```
