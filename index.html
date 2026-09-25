@@ -71,7 +71,7 @@
   <div id="cardModal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-md opacity-0 pointer-events-none transition-all duration-500">
     <div id="cardContainer" class="glass-card rounded-2xl p-6 sm:p-8 max-w-lg w-full transform scale-95 transition-transform duration-500 relative border border-amber-200/20">
       <div class="text-center mb-4">
-        <span class="text-3xl">🏮</span>
+        <span class="text-4xl">🏮</span>
         <h3 class="text-amber-200/90 font-handwriting text-2xl mt-1">Lời Chúc Đêm Trung Thu</h3>
       </div>
       
@@ -150,6 +150,7 @@
     let fireworks = [];
     let particles = [];
 
+    // Smooth hover LERP properties for Moon
     const moon = {
       x: 0,
       y: 0,
@@ -157,8 +158,10 @@
       targetRadius: 0,
       opacity: 0,
       glowOpacity: 0,
-      isAwake: false,
-      isHovered: false
+      hoverScale: 1.0,
+      targetHoverScale: 1.0,
+      hoverGlow: 0.0,
+      targetHoverGlow: 0.0
     };
 
     const introLines = [
@@ -169,23 +172,26 @@
     ];
 
     async function runIntroTypewriter() {
+      // 1. CHO 3S KHI MỚI VÀO WEB RỒI MỚI HIỆN CHỮ
+      await sleep(3000);
+
       typewriterTextEl.classList.add('blinking-cursor');
       
       for (let i = 0; i < introLines.length; i++) {
         const line = introLines[i];
         for (let j = 0; j <= line.length; j++) {
           typewriterTextEl.innerText = line.substring(0, j);
-          await sleep(75 + Math.random() * 35);
+          await sleep(80 + Math.random() * 30);
         }
 
-        await sleep(1400);
+        await sleep(1500);
 
         if (i < introLines.length - 1) {
           for (let j = line.length; j >= 0; j--) {
             typewriterTextEl.innerText = line.substring(0, j);
             await sleep(35);
           }
-          await sleep(350);
+          await sleep(400);
         }
       }
 
@@ -203,26 +209,25 @@
       return new Promise(resolve => setTimeout(resolve, ms));
     }
 
-    // --- CHILL MOON BLINK & AWAKENING ---
+    // --- ĐỐM SÁNG 2PX NHẤP NHÁY CHILL ---
     async function startDotSequence() {
       currentState = STATES.DOT_BLINKING;
       moon.x = width / 2;
       moon.y = height / 2;
-      moon.radius = 2;
+      moon.radius = 2; // Đúng 2px
       moon.opacity = 0;
 
-      // Smooth sine-wave pulse for 3 chill blinks
-      const blinkDuration = 3600; 
+      // 6 giây nhấp nháy 3 nhịp cực êm
+      const blinkDuration = 6000; 
       const startTime = performance.now();
 
       await new Promise(resolve => {
         function pulse(now) {
           const elapsed = now - startTime;
           if (elapsed < blinkDuration) {
-            // Smooth sine wave from 0 to 1 back to 0
             const progress = elapsed / blinkDuration;
-            moon.opacity = Math.sin(progress * Math.PI * 3) * 0.85;
-            if (moon.opacity < 0) moon.opacity = 0;
+            // Cosine cho nhịp thở mượt không bị khựng
+            moon.opacity = (1 - Math.cos(progress * Math.PI * 6)) * 0.45;
             requestAnimationFrame(pulse);
           } else {
             moon.opacity = 0.9;
@@ -235,29 +240,27 @@
       startMoonAwakening();
     }
 
+    // --- MẶT TRĂNG PHÓNG TO CHẬM CHILL ---
     function startMoonAwakening() {
       currentState = STATES.MOON_AWAKENING;
       moon.opacity = 1;
-      moon.targetRadius = Math.min(width, height) * 0.11;
-      if (moon.targetRadius < 45) moon.targetRadius = 45;
-      if (moon.targetRadius > 85) moon.targetRadius = 85;
+      moon.targetRadius = Math.min(width, height) * 0.12;
+      if (moon.targetRadius < 50) moon.targetRadius = 50;
+      if (moon.targetRadius > 95) moon.targetRadius = 95;
 
-      // Chill expansion speed (3.5s)
+      // Phóng to chậm trong 4.5 giây
       let startTime = null;
       function animateAwake(time) {
         if (!startTime) startTime = time;
-        let progress = (time - startTime) / 3500;
+        let progress = (time - startTime) / 4500;
         if (progress > 1) progress = 1;
 
-        // Smooth Ease-Out-Cubic
         const ease = 1 - Math.pow(1 - progress, 3);
         moon.radius = 2 + (moon.targetRadius - 2) * ease;
-        moon.glowOpacity = ease * 0.75;
+        moon.glowOpacity = ease * 0.8;
 
         if (progress < 1) {
           requestAnimationFrame(animateAwake);
-        } else {
-          moon.isAwake = true;
         }
       }
       requestAnimationFrame(animateAwake);
@@ -265,46 +268,45 @@
 
     function initStars() {
       stars = [];
-      const count = Math.floor((width * height) / 3500);
+      const count = Math.floor((width * height) / 3200);
       for (let i = 0; i < count; i++) {
         stars.push({
           x: Math.random() * width,
           y: Math.random() * height * 1.5,
           size: Math.random() * 1.4 + 0.4,
           alpha: Math.random() * 0.7 + 0.2,
-          twinkleSpeed: Math.random() * 0.015 + 0.005
+          twinkleSpeed: Math.random() * 0.012 + 0.005
         });
       }
     }
     initStars();
 
-    // --- LANTERNS SYSTEM (THƯA + ĐẸP + BAY TỪ DƯỚI LÊN) ---
+    // --- ĐÈN LỒNG TO HƠN + BAY NHANH HƠN VỪA PHẢI ---
     function spawnLanterns() {
       lanterns = [];
-      // Thưa thớt: Chỉ duy trì tầm 4-6 đèn lồng rải rác
       const maxLanternsOnScreen = 5;
       for (let i = 0; i < maxLanternsOnScreen; i++) {
         setTimeout(() => {
           if (currentState === STATES.INTERACTIVE_SKY || currentState === STATES.WAITING_LANTERNS_CLEAR) {
             lanterns.push(createLantern(true));
           }
-        }, i * 2200 + Math.random() * 800); // Thưa nhịp delay
+        }, i * 1800 + Math.random() * 600);
       }
     }
 
     function createLantern(fromBottom = true) {
-      const scale = Math.random() * 0.35 + 0.65;
+      // Tăng kích thước đèn lồng (Scale 0.95 - 1.35)
+      const scale = Math.random() * 0.4 + 0.95;
       return {
-        x: Math.random() * (width - 120) + 60,
-        // Bay từ bên dưới màn hình lên
-        y: fromBottom ? height + 60 + Math.random() * 80 : Math.random() * height,
-        speedY: Math.random() * 0.35 + 0.35, // Thong thả trôi
-        swayAmplitude: Math.random() * 15 + 10,
-        swaySpeed: Math.random() * 0.012 + 0.008,
+        x: Math.random() * (width - 140) + 70,
+        y: fromBottom ? height + 80 + Math.random() * 100 : Math.random() * height,
+        speedY: Math.random() * 0.4 + 0.65, // Bay vừa tầm, không bị quá chậm
+        swayAmplitude: Math.random() * 18 + 12,
+        swaySpeed: Math.random() * 0.015 + 0.01,
         swayOffset: Math.random() * Math.PI * 2,
         scale: scale,
-        opacity: Math.random() * 0.2 + 0.8,
-        size: 26 * scale,
+        opacity: Math.random() * 0.2 + 0.85,
+        size: 34 * scale,
         flicker: Math.random() * Math.PI
       };
     }
@@ -319,44 +321,44 @@
       const glowPulse = Math.sin(l.flicker) * 0.15 + 0.85;
 
       // 1. Soft Warm Glow
-      const lGlow = ctx.createRadialGradient(0, 0, 2, 0, 0, 32 * s);
-      lGlow.addColorStop(0, `rgba(251, 146, 60, ${0.75 * glowPulse})`);
-      lGlow.addColorStop(0.6, `rgba(245, 158, 11, ${0.25 * glowPulse})`);
+      const lGlow = ctx.createRadialGradient(0, 0, 3, 0, 0, 42 * s);
+      lGlow.addColorStop(0, `rgba(251, 146, 60, ${0.8 * glowPulse})`);
+      lGlow.addColorStop(0.6, `rgba(245, 158, 11, ${0.3 * glowPulse})`);
       lGlow.addColorStop(1, 'rgba(0, 0, 0, 0)');
       ctx.fillStyle = lGlow;
       ctx.beginPath();
-      ctx.arc(0, 0, 32 * s, 0, Math.PI * 2);
+      ctx.arc(0, 0, 42 * s, 0, Math.PI * 2);
       ctx.fill();
 
-      // 2. Tassel (Dải lụa đuôi lồng đèn đung đưa)
-      const swayTassel = Math.sin(timestamp * 0.002 + l.swayOffset) * 4;
+      // 2. Tassel
+      const swayTassel = Math.sin(timestamp * 0.0025 + l.swayOffset) * 6;
       ctx.strokeStyle = '#dc2626';
-      ctx.lineWidth = 1.5 * s;
+      ctx.lineWidth = 2 * s;
       ctx.beginPath();
-      ctx.moveTo(0, 16 * s);
-      ctx.quadraticCurveTo(swayTassel * 0.5, 26 * s, swayTassel, 34 * s);
+      ctx.moveTo(0, 20 * s);
+      ctx.quadraticCurveTo(swayTassel * 0.5, 32 * s, swayTassel, 44 * s);
       ctx.stroke();
 
-      // 3. Main Lantern Body (Khung Tre Bo Góc)
-      const bodyGrad = ctx.createLinearGradient(-12 * s, 0, 12 * s, 0);
+      // 3. Main Body
+      const bodyGrad = ctx.createLinearGradient(-15 * s, 0, 15 * s, 0);
       bodyGrad.addColorStop(0, '#ea580c');
       bodyGrad.addColorStop(0.5, '#f97316');
       bodyGrad.addColorStop(1, '#c2410c');
 
       ctx.fillStyle = bodyGrad;
       ctx.beginPath();
-      ctx.roundRect(-11 * s, -15 * s, 22 * s, 30 * s, 6 * s);
+      ctx.roundRect(-14 * s, -19 * s, 28 * s, 38 * s, 8 * s);
       ctx.fill();
 
-      // Top & Bottom Wooden Caps
+      // Caps
       ctx.fillStyle = '#78350f';
-      ctx.fillRect(-9 * s, -17 * s, 18 * s, 2.5 * s);
-      ctx.fillRect(-9 * s, 15 * s, 18 * s, 2.5 * s);
+      ctx.fillRect(-11 * s, -21.5 * s, 22 * s, 3.5 * s);
+      ctx.fillRect(-11 * s, 19 * s, 22 * s, 3.5 * s);
 
-      // 4. Inner Candle Core
+      // Inner Light
       ctx.fillStyle = `rgba(254, 240, 138, ${glowPulse})`;
       ctx.beginPath();
-      ctx.ellipse(0, 0, 5 * s, 8 * s, 0, 0, Math.PI * 2);
+      ctx.ellipse(0, 0, 6 * s, 10 * s, 0, 0, Math.PI * 2);
       ctx.fill();
 
       ctx.restore();
@@ -405,6 +407,7 @@
       closeGreetingCard();
     });
 
+    // MƯỢT HÓA HOVER MẶT TRĂNG
     canvas.addEventListener('mousemove', (e) => {
       const rect = canvas.getBoundingClientRect();
       const mouseX = e.clientX - rect.left;
@@ -412,7 +415,13 @@
 
       if (currentState === STATES.MOON_AWAKENING || currentState === STATES.INTERACTIVE_SKY || currentState === STATES.MOON_GLOWING_UP) {
         const dist = Math.hypot(mouseX - moon.x, mouseY - moon.y);
-        moon.isHovered = dist < moon.radius * 1.2;
+        if (dist < moon.radius * 1.3) {
+          moon.targetHoverScale = 1.15;
+          moon.targetHoverGlow = 0.4;
+        } else {
+          moon.targetHoverScale = 1.0;
+          moon.targetHoverGlow = 0.0;
+        }
       }
     });
 
@@ -434,7 +443,7 @@
         for (let i = lanterns.length - 1; i >= 0; i--) {
           const l = lanterns[i];
           const dist = Math.hypot(mouseX - l.x, mouseY - l.y);
-          if (dist < l.size * 1.6) {
+          if (dist < l.size * 1.5) {
             lanterns.splice(i, 1);
             openGreetingCard(lanternClicks);
             break;
@@ -452,17 +461,17 @@
     async function triggerOutroSequence() {
       currentState = STATES.MOON_SHRINKING;
 
-      // Chill Smooth Shrink (1.2s)
+      // THU NHỎ MẶT TRĂNG CHẬM CHILL (3.5s)
       const startR = moon.radius;
-      const targetR = 9;
+      const targetR = 10;
       let startTime = null;
 
       await new Promise(resolve => {
         function shrink(time) {
           if (!startTime) startTime = time;
-          let p = (time - startTime) / 1200;
+          let p = (time - startTime) / 3500;
           if (p > 1) p = 1;
-          const ease = 1 - Math.pow(1 - p, 3); // Ease-out
+          const ease = 1 - Math.pow(1 - p, 3);
           moon.radius = startR - (startR - targetR) * ease;
           if (p < 1) requestAnimationFrame(shrink);
           else resolve();
@@ -473,13 +482,13 @@
       await sleep(5000);
 
       currentState = STATES.CAMERA_PANNING;
-      targetCameraOffsetY = -height * 0.28;
+      targetCameraOffsetY = -height * 0.32;
       
       let panStartTime = null;
       await new Promise(resolve => {
         function pan(time) {
           if (!panStartTime) panStartTime = time;
-          let p = (time - panStartTime) / 3800;
+          let p = (time - panStartTime) / 4000;
           if (p > 1) p = 1;
           const ease = 0.5 - Math.cos(p * Math.PI) / 2;
           cameraOffsetY = targetCameraOffsetY * ease;
@@ -608,6 +617,10 @@
     function render(timestamp) {
       ctx.clearRect(0, 0, width, height);
 
+      // LERP HOVER SMOOTHNESS
+      moon.hoverScale += (moon.targetHoverScale - moon.hoverScale) * 0.06;
+      moon.hoverGlow += (moon.targetHoverGlow - moon.hoverGlow) * 0.06;
+
       ctx.save();
       ctx.translate(0, cameraOffsetY);
 
@@ -624,15 +637,15 @@
       if (moon.opacity > 0) {
         ctx.save();
         
-        const currentR = moon.isHovered ? moon.radius * 1.06 : moon.radius;
+        const currentR = moon.radius * moon.hoverScale;
 
         // Smooth Breathing Glow
-        const breathGlow = Math.sin(timestamp * 0.0015) * 0.1 + 0.9;
-        const glowRadius = currentR * (currentState === STATES.MOON_GLOWING_UP ? 3.6 : 2.3) * breathGlow;
+        const breathGlow = Math.sin(timestamp * 0.0012) * 0.1 + 0.9;
+        const glowRadius = currentR * (currentState === STATES.MOON_GLOWING_UP ? 3.8 : 2.4) * breathGlow;
         
         const glowGradient = ctx.createRadialGradient(moon.x, moon.y, currentR * 0.4, moon.x, moon.y, glowRadius);
-        glowGradient.addColorStop(0, `rgba(254, 240, 138, ${moon.glowOpacity * 0.85})`);
-        glowGradient.addColorStop(0.5, `rgba(253, 224, 71, ${moon.glowOpacity * 0.25})`);
+        glowGradient.addColorStop(0, `rgba(254, 240, 138, ${(moon.glowOpacity + moon.hoverGlow) * 0.85})`);
+        glowGradient.addColorStop(0.5, `rgba(253, 224, 71, ${(moon.glowOpacity + moon.hoverGlow) * 0.3})`);
         glowGradient.addColorStop(1, 'rgba(0, 0, 0, 0)');
 
         ctx.fillStyle = glowGradient;
@@ -670,8 +683,7 @@
 
           drawBeautifulLantern(ctx, l, timestamp);
 
-          // Recycle from bottom
-          if (l.y < -60) {
+          if (l.y < -80) {
             if (currentState === STATES.INTERACTIVE_SKY) {
               lanterns[i] = createLantern(true);
             } else {
@@ -726,39 +738,40 @@
         }
       }
 
-      // Silhouettes
-      if (cameraOffsetY < 0) {
-        ctx.save();
-        const baseGroundY = height + Math.abs(targetCameraOffsetY) - 10;
+      // 5. BÓNG NGƯỜI TỰA VÀO NHAU (TỌA ĐỘ CHUẨN ĐÁY MÀN HÌNH)
+      ctx.save();
+      // Vẽ cố định ở phần đáy canvas bên dưới
+      const groundY = height + Math.abs(targetCameraOffsetY) - 20;
 
-        ctx.fillStyle = '#020617';
-        ctx.beginPath();
-        ctx.ellipse(width / 2, baseGroundY + 120, width * 0.7, 160, 0, Math.PI, 0);
-        ctx.fill();
+      // Ngọn đồi
+      ctx.fillStyle = '#020617';
+      ctx.beginPath();
+      ctx.ellipse(width / 2, groundY + 130, width * 0.75, 170, 0, Math.PI, 0);
+      ctx.fill();
 
-        const centerX = width / 2;
-        const groundY = baseGroundY - 20;
+      // Silhouette hai đứa
+      const centerX = width / 2;
+      const silY = groundY - 15;
 
-        ctx.fillStyle = '#080d1a';
+      ctx.fillStyle = '#080d1a';
 
-        // Person 1
-        ctx.beginPath();
-        ctx.arc(centerX - 16, groundY - 42, 10, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.beginPath();
-        ctx.ellipse(centerX - 14, groundY - 18, 14, 22, 0.15, 0, Math.PI * 2);
-        ctx.fill();
+      // Person 1 (Bên trái)
+      ctx.beginPath();
+      ctx.arc(centerX - 18, silY - 45, 12, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.beginPath();
+      ctx.ellipse(centerX - 16, silY - 18, 16, 24, 0.15, 0, Math.PI * 2);
+      ctx.fill();
 
-        // Person 2
-        ctx.beginPath();
-        ctx.arc(centerX + 6, groundY - 38, 9, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.beginPath();
-        ctx.ellipse(centerX + 8, groundY - 16, 13, 20, -0.1, 0, Math.PI * 2);
-        ctx.fill();
+      // Person 2 (Bên phải tựa đầu vào)
+      ctx.beginPath();
+      ctx.arc(centerX + 6, silY - 40, 10, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.beginPath();
+      ctx.ellipse(centerX + 8, silY - 15, 14, 22, -0.12, 0, Math.PI * 2);
+      ctx.fill();
 
-        ctx.restore();
-      }
+      ctx.restore();
 
       ctx.restore();
       requestAnimationFrame(render);
