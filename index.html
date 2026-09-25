@@ -1,332 +1,264 @@
+```html
 <!DOCTYPE html>
 <html lang="vi">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-  <meta name="theme-color" content="#020617">
-  <title>Tặng Em Bé Mặt Trăng Nhỏ 🌕✨</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tặng Em Bé Một Mặt Trăng Nhỏ 🌕</title>
 
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@500;600;700&family=Quicksand:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdn.tailwindcss.com"></script>
 
-  <style>
-    :root {
-      --night-0: #02040b;
-      --night-1: #050b18;
-      --night-2: #0b1224;
-      --moon: #fff4b0;
-      --moon-hot: #fffbe8;
-      --gold: #f7c96b;
-      --lantern: #ff8b42;
-      --paper: rgba(12, 18, 34, .88);
-      --text: #f7f2df;
-    }
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Dancing+Script:wght@500;600;700&family=Quicksand:wght@400;500;600;700&display=swap');
 
-    * { box-sizing: border-box; }
+* {
+    box-sizing: border-box;
+}
 
-    html, body {
-      width: 100%;
-      height: 100%;
-      margin: 0;
-      overflow: hidden;
-      background:
-        radial-gradient(circle at 50% 42%, #101a32 0%, #050a16 38%, #02040b 78%);
-      color: var(--text);
-      font-family: "Quicksand", sans-serif;
-      user-select: none;
-      -webkit-user-select: none;
-      -webkit-tap-highlight-color: transparent;
-    }
+html,
+body {
+    margin: 0;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    background: #02040a;
+}
 
-    body {
-      position: relative;
-      isolation: isolate;
-    }
+body {
+    font-family: "Quicksand", sans-serif;
+    color: white;
+    user-select: none;
+}
 
-    canvas {
-      position: fixed;
-      inset: 0;
-      width: 100%;
-      height: 100%;
-      display: block;
-      z-index: 1;
-      cursor: default;
-    }
+canvas {
+    position: fixed;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    display: block;
+}
 
-    .ui-layer {
-      position: fixed;
-      inset: 0;
-      z-index: 10;
-      pointer-events: none;
-    }
+.ui {
+    position: fixed;
+    inset: 0;
+    z-index: 20;
+    pointer-events: none;
+}
 
-    .font-handwriting {
-      font-family: "Dancing Script", cursive;
-    }
+.handwriting {
+    font-family: "Dancing Script", cursive;
+}
 
-    #introScreen {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      padding: 24px;
-      text-align: center;
-      transition: opacity 1100ms ease;
-    }
+.type-cursor::after {
+    content: "|";
+    margin-left: 3px;
+    color: rgba(255, 238, 170, .9);
+    animation: cursorBlink .8s ease-in-out infinite;
+}
 
-    #introTextWrap {
-      width: min(92vw, 900px);
-      min-height: clamp(60px, 9vw, 110px);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
+@keyframes cursorBlink {
+    0%, 45% { opacity: 1; }
+    50%, 100% { opacity: 0; }
+}
 
-    #typewriterText {
-      margin: 0;
-      color: rgba(255, 248, 220, .94);
-      font-size: clamp(18px, 2.4vw, 34px);
-      line-height: 1.5;
-      letter-spacing: .045em;
-      text-shadow:
-        0 0 18px rgba(255, 236, 164, .08),
-        0 2px 18px rgba(0,0,0,.35);
-      font-weight: 500;
-    }
+/* =========================
+   CARD
+========================= */
 
-    .blinking-cursor::after {
-      content: "|";
-      display: inline-block;
-      margin-left: 3px;
-      color: #fff0a8;
-      animation: cursorBlink .78s steps(1) infinite;
-    }
+#cardModal {
+    position: fixed;
+    inset: 0;
+    z-index: 100;
+    display: flex;
+    justify-content: center;
+    align-items: center;
 
-    @keyframes cursorBlink {
-      0%, 45% { opacity: 1; }
-      46%, 100% { opacity: 0; }
-    }
+    background: rgba(0,0,0,.42);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
 
-    #cardModal {
-      position: fixed;
-      inset: 0;
-      z-index: 50;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      padding: clamp(16px, 4vw, 42px);
-      background: rgba(1, 4, 11, .34);
-      backdrop-filter: blur(0px);
-      -webkit-backdrop-filter: blur(0px);
-      opacity: 0;
-      pointer-events: none;
-      transition:
-        opacity 500ms ease,
-        backdrop-filter 500ms ease,
-        -webkit-backdrop-filter 500ms ease;
-    }
+    opacity: 0;
+    pointer-events: none;
 
-    #cardModal.open {
-      opacity: 1;
-      pointer-events: auto;
-      backdrop-filter: blur(13px) saturate(.78);
-      -webkit-backdrop-filter: blur(13px) saturate(.78);
-    }
+    transition:
+        opacity 700ms ease;
+}
 
-    #cardContainer {
-      width: min(720px, 92vw);
-      min-height: clamp(260px, 38vh, 390px);
-      max-height: 78vh;
-      overflow: auto;
-      padding: clamp(24px, 4vw, 42px);
-      border-radius: 28px;
-      background:
-        radial-gradient(circle at 50% 0%, rgba(255, 218, 133, .09), transparent 45%),
-        linear-gradient(145deg, rgba(21, 29, 51, .94), rgba(6, 11, 23, .91));
-      border: 1px solid rgba(255, 231, 164, .18);
-      box-shadow:
+#card {
+    width: min(680px, calc(100vw - 32px));
+    min-height: 330px;
+
+    padding: 42px 46px;
+
+    border-radius: 28px;
+
+    background:
+        linear-gradient(
+            145deg,
+            rgba(25, 31, 53, .82),
+            rgba(8, 12, 25, .88)
+        );
+
+    border: 1px solid rgba(255,255,255,.12);
+
+    box-shadow:
         0 35px 100px rgba(0,0,0,.62),
-        inset 0 1px 0 rgba(255,255,255,.05),
-        0 0 80px rgba(247, 201, 107, .055);
-      transform: translateY(10px) scale(.96);
-      opacity: 0;
-      transition:
-        transform 550ms cubic-bezier(.2,.8,.2,1),
-        opacity 400ms ease;
+        inset 0 1px rgba(255,255,255,.07);
+
+    transform: scale(.94) translateY(15px);
+
+    transition:
+        transform 800ms cubic-bezier(.16,1,.3,1);
+}
+
+#cardModal.open {
+    opacity: 1;
+    pointer-events: auto;
+}
+
+#cardModal.open #card {
+    transform: scale(1) translateY(0);
+}
+
+#cardTitle {
+    color: rgba(255,228,150,.9);
+    font-size: 24px;
+    margin-bottom: 28px;
+}
+
+#cardText {
+    min-height: 145px;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    text-align: center;
+
+    font-size: clamp(16px, 2vw, 20px);
+    line-height: 1.9;
+
+    color: rgba(250,248,242,.92);
+}
+
+#cardHint {
+    margin-top: 28px;
+
+    text-align: center;
+
+    font-size: 12px;
+    letter-spacing: .08em;
+
+    color: rgba(255,255,255,.34);
+
+    opacity: 0;
+    transition: opacity 900ms ease;
+}
+
+#cardHint.show {
+    opacity: 1;
+}
+
+/* =========================
+   ENDING
+========================= */
+
+#ending {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+
+    opacity: 0;
+}
+
+.ending-line {
+    opacity: 0;
+    text-align: center;
+}
+
+#ending1 {
+    font-size: clamp(28px, 5vw, 54px);
+    color: rgba(255,239,181,.95);
+}
+
+#ending2 {
+    margin-top: 22px;
+    font-size: clamp(18px, 3vw, 30px);
+    color: rgba(255,205,220,.9);
+}
+
+/* Mobile card */
+@media (max-width: 600px) {
+    #card {
+        padding: 32px 25px;
+        min-height: 300px;
     }
-
-    #cardModal.open #cardContainer {
-      transform: translateY(0) scale(1);
-      opacity: 1;
-    }
-
-    #cardContainer::-webkit-scrollbar { width: 5px; }
-    #cardContainer::-webkit-scrollbar-thumb {
-      background: rgba(255,255,255,.12);
-      border-radius: 99px;
-    }
-
-    .card-top {
-      text-align: center;
-      margin-bottom: 20px;
-    }
-
-    .card-lantern {
-      display: inline-flex;
-      width: 42px;
-      height: 42px;
-      align-items: center;
-      justify-content: center;
-      border-radius: 50%;
-      background: radial-gradient(circle, rgba(255,205,105,.18), transparent 68%);
-      font-size: 30px;
-      filter: drop-shadow(0 0 13px rgba(255,160,75,.2));
-    }
-
-    .card-title {
-      margin: 5px 0 0;
-      color: rgba(255,229,159,.88);
-      font-size: clamp(22px, 3vw, 28px);
-      font-weight: 600;
-    }
-
-    #cardText {
-      width: 100%;
-      margin: 0 auto;
-      min-height: 150px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      color: rgba(248,248,244,.94);
-      font-size: clamp(16px, 2vw, 20px);
-      line-height: 1.9;
-      letter-spacing: .012em;
-      text-align: center;
-      white-space: pre-line;
-      text-shadow: 0 2px 15px rgba(0,0,0,.24);
-    }
-
-    #cardFooter {
-      margin-top: 24px;
-      text-align: center;
-      opacity: 0;
-      transition: opacity 900ms ease;
-    }
-
-    #cardFooter.show { opacity: 1; }
-
-    #cardFooter p {
-      margin: 0;
-      color: rgba(222, 228, 241, .46);
-      font-size: 12px;
-      letter-spacing: .08em;
-    }
-
-    #endingScreen {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      flex-direction: column;
-      text-align: center;
-      padding: 24px;
-      opacity: 0;
-      transition: opacity 1200ms ease;
-    }
-
-    #endingScreen.visible {
-      opacity: 1;
-    }
-
-    #endingText1,
-    #endingText2 {
-      margin: 0;
-      opacity: 0;
-      transition: opacity 1200ms ease;
-      text-shadow: 0 0 30px rgba(255,220,130,.10);
-    }
-
-    #endingText1 {
-      font-family: "Dancing Script", cursive;
-      font-size: clamp(30px, 5vw, 58px);
-      color: rgba(255,244,201,.96);
-      letter-spacing: .025em;
-    }
-
-    #endingText2 {
-      margin-top: 20px;
-      font-size: clamp(16px, 2.4vw, 23px);
-      color: rgba(255,205,214,.82);
-      letter-spacing: .06em;
-    }
-
-    #endingText1.show,
-    #endingText2.show {
-      opacity: 1;
-    }
-
-    .vignette {
-      position: fixed;
-      inset: 0;
-      z-index: 4;
-      pointer-events: none;
-      background:
-        radial-gradient(circle at 50% 46%, transparent 35%, rgba(0,0,0,.22) 100%);
-    }
-
-    @media (max-width: 600px) {
-      #cardContainer {
-        width: 92vw;
-        min-height: 270px;
-        border-radius: 24px;
-      }
-
-      #cardText {
-        line-height: 1.75;
-      }
-    }
-
-    @media (prefers-reduced-motion: reduce) {
-      *, *::before, *::after {
-        animation-duration: .001ms !important;
-        animation-iteration-count: 1 !important;
-        transition-duration: .001ms !important;
-      }
-    }
-  </style>
+}
+</style>
 </head>
 
 <body>
-  <canvas id="mainCanvas"></canvas>
-  <div class="vignette"></div>
 
-  <!-- INTRO -->
-  <div id="introScreen" class="ui-layer">
-    <div id="introTextWrap">
-      <p id="typewriterText"></p>
+<canvas id="canvas"></canvas>
+
+<!-- =========================
+     INTRO
+========================= -->
+
+<div id="intro" class="ui flex items-center justify-center text-center px-6">
+    <div>
+        <div
+            id="introText"
+            class="text-xl sm:text-2xl md:text-3xl tracking-wide text-amber-100/90 type-cursor">
+        </div>
     </div>
-  </div>
+</div>
 
-  <!-- CARD -->
-  <div id="cardModal">
-    <div id="cardContainer">
-      <div class="card-top">
-        <span class="card-lantern">🏮</span>
-        <h3 class="card-title font-handwriting">Một lời nhắn gửi em bé</h3>
-      </div>
+<!-- =========================
+     CARD
+========================= -->
 
-      <p id="cardText"></p>
+<div id="cardModal">
 
-      <div id="cardFooter">
-        <p>Chạm ra ngoài để khép lại.</p>
-      </div>
+    <div id="card">
+
+        <div
+            id="cardTitle"
+            class="handwriting text-center">
+            Một lời chúc nhỏ cho em 🌕
+        </div>
+
+        <div id="cardText" class="type-cursor"></div>
+
+        <div id="cardHint">
+            Khép thiệp lại khi em đọc xong nhé
+        </div>
+
     </div>
-  </div>
 
-  <!-- END -->
-  <div id="endingScreen" class="ui-layer">
-    <p id="endingText1">Trung Thu Vui Vẻ Nhé</p>
-    <p id="endingText2">Em Bé Của Em ❤️</p>
-  </div>
+</div>
+
+<!-- =========================
+     ENDING
+========================= -->
+
+<div id="ending" class="ui">
+
+    <div
+        id="ending1"
+        class="ending-line handwriting">
+        Trung Thu Vui Vẻ Nhé
+    </div>
+
+    <div
+        id="ending2"
+        class="ending-line">
+        Em Bé Của Em ❤️
+    </div>
+
+</div>
+
 
 <script>
 "use strict";
@@ -337,1077 +269,845 @@
 
 const LANTERN_LIMIT = 3;
 
-const GREETINGS = [
-  "Gửi em bé,\nChúc em có một đêm Trung Thu thật ấm áp và tràn ngập niềm vui ✨\nDù bầu trời ngoài kia có rộng lớn thế nào, em vẫn luôn là điều đặc biệt nhất.",
-  "Cảm ơn em đã xuất hiện và làm cho những ngày bình thường trở nên thật ngọt ngào 🌕\nMong cho nụ cười của em bé luôn rạng rỡ như ánh trăng đêm nay.",
-  "Mặt trăng nhỏ này là dành riêng cho em đấy ❤️\nHy vọng chúng ta sẽ cùng nhau đi qua thật nhiều mùa Trung Thu trọn vẹn và hạnh phúc hơn nữa."
+const INTRO_LINES = [
+    "25-9-2026",
+    "Rằm tháng 8 rồi đấy",
+    "Thế em bé đã có quà gì chưa",
+    "Tặng em bé một mặt trăng nhỏ nhé!"
 ];
 
-const STATES = Object.freeze({
-  INTRO_TYPING: "INTRO_TYPING",
-  DOT_BLINKING: "DOT_BLINKING",
-  MOON_AWAKENING: "MOON_AWAKENING",
-  INTERACTIVE_SKY: "INTERACTIVE_SKY",
-  WAITING_LANTERNS_CLEAR: "WAITING_LANTERNS_CLEAR",
-  MOON_GLOWING_UP: "MOON_GLOWING_UP",
-  MOON_SHRINKING: "MOON_SHRINKING",
-  CAMERA_PANNING: "CAMERA_PANNING",
-  FIREWORKS_SHOW: "FIREWORKS_SHOW",
-  FIREWORKS_PAUSE: "FIREWORKS_PAUSE",
-  LOVE_FOREVER_BURST: "LOVE_FOREVER_BURST",
-  ENDING_TEXT: "ENDING_TEXT"
-});
+const GREETINGS = [
+    "Chúc em bé có một đêm Trung Thu thật vui,\nthật ấm áp và thật nhiều tiếng cười ✨",
 
-let currentState = STATES.INTRO_TYPING;
+    "Mong những ngày phía trước của em\nluôn có thật nhiều điều dịu dàng tìm đến 🌕",
+
+    "Và nếu có một điều ước trong đêm nay,\nthì em hãy giữ nó thật lâu nhé ❤️"
+];
+
+/* =========================================================
+   STATE
+========================================================= */
+
+const STATES = {
+    INTRO: "INTRO",
+    MOON_APPEAR: "MOON_APPEAR",
+    SKY: "SKY",
+    WAIT_LANTERNS: "WAIT_LANTERNS",
+    MOON_READY: "MOON_READY",
+    MOON_SHRINK: "MOON_SHRINK",
+    CAMERA: "CAMERA",
+    FIREWORKS: "FIREWORKS",
+    FIREWORKS_PAUSE: "FIREWORKS_PAUSE",
+    LOVE_FOREVER: "LOVE_FOREVER",
+    ENDING: "ENDING"
+};
+
+let state = STATES.INTRO;
+
 let lanternClicks = 0;
-let activeCardOpen = false;
-let width = 0;
-let height = 0;
-let dpr = 1;
+let activeCard = false;
+
+/* =========================================================
+   CANVAS
+========================================================= */
+
+const canvas = document.getElementById("canvas");
+const ctx = canvas.getContext("2d");
+
+let W = 0;
+let H = 0;
 
 let cameraOffsetY = 0;
 let targetCameraOffsetY = 0;
 
-let stars = [];
-let lanterns = [];
-let fireworks = [];
-let particles = [];
-let textParticles = [];
+function resize() {
 
-let lastFrameTime = performance.now();
+    const dpr = Math.min(window.devicePixelRatio || 1, 2);
 
-/* =========================================================
-   DOM
-========================================================= */
+    W = window.innerWidth;
+    H = window.innerHeight;
 
-const canvas = document.getElementById("mainCanvas");
-const ctx = canvas.getContext("2d", { alpha: true });
+    canvas.width = W * dpr;
+    canvas.height = H * dpr;
 
-const introScreen = document.getElementById("introScreen");
-const typewriterText = document.getElementById("typewriterText");
+    canvas.style.width = W + "px";
+    canvas.style.height = H + "px";
 
-const cardModal = document.getElementById("cardModal");
-const cardContainer = document.getElementById("cardContainer");
-const cardText = document.getElementById("cardText");
-const cardFooter = document.getElementById("cardFooter");
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
 
-const endingScreen = document.getElementById("endingScreen");
-const endingText1 = document.getElementById("endingText1");
-const endingText2 = document.getElementById("endingText2");
+    createStars();
+}
+
+window.addEventListener("resize", resize);
+
 
 /* =========================================================
    HELPERS
 ========================================================= */
 
-const sleep = ms => new Promise(resolve => setTimeout(resolve, ms));
-const clamp = (v, min, max) => Math.max(min, Math.min(max, v));
-const lerp = (a, b, t) => a + (b - a) * t;
+const clamp = (v, a, b) =>
+    Math.max(a, Math.min(b, v));
 
-function easeOutCubic(t) {
-  return 1 - Math.pow(1 - clamp(t, 0, 1), 3);
+const lerp = (a, b, t) =>
+    a + (b - a) * t;
+
+const easeOutCubic = t =>
+    1 - Math.pow(1 - t, 3);
+
+const easeInOut = t =>
+    0.5 - Math.cos(Math.PI * t) / 2;
+
+const sleep = ms =>
+    new Promise(resolve => setTimeout(resolve, ms));
+
+function random(a, b) {
+    return a + Math.random() * (b - a);
 }
 
-function easeInOutCubic(t) {
-  t = clamp(t, 0, 1);
-  return t < .5
-    ? 4 * t * t * t
-    : 1 - Math.pow(-2 * t + 2, 3) / 2;
+
+/* =========================================================
+   STARS
+========================================================= */
+
+let stars = [];
+
+function createStars() {
+
+    stars = [];
+
+    const amount = Math.floor((W * H) / 5500);
+
+    for (let i = 0; i < amount; i++) {
+
+        stars.push({
+            x: Math.random() * W,
+            y: Math.random() * H * 1.5,
+
+            radius: random(.35, 1.15),
+
+            alpha: random(.18, .7),
+
+            twinkle: random(.4, 1.2),
+
+            phase: Math.random() * Math.PI * 2
+        });
+    }
 }
 
-function easeOutQuart(t) {
-  return 1 - Math.pow(1 - clamp(t, 0, 1), 4);
-}
-
-function random(min, max) {
-  return min + Math.random() * (max - min);
-}
-
-function resize() {
-  width = window.innerWidth;
-  height = window.innerHeight;
-
-  dpr = Math.min(window.devicePixelRatio || 1, 2);
-
-  canvas.width = Math.round(width * dpr);
-  canvas.height = Math.round(height * dpr);
-  canvas.style.width = width + "px";
-  canvas.style.height = height + "px";
-
-  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-
-  createStars();
-
-  moon.x = width * .5;
-  if (!moon.lockY) moon.y = height * .47;
-  moon.targetRadius = getMoonRadius();
-}
-
-window.addEventListener("resize", resize);
 
 /* =========================================================
    MOON
 ========================================================= */
 
 const moon = {
-  x: 0,
-  y: 0,
-  radius: 1.5,
-  targetRadius: 80,
-  opacity: 0,
-  glowOpacity: 0,
-  hoverAmount: 0,
-  isAwake: false,
-  lockY: false
+
+    x: 0,
+    y: 0,
+
+    radius: 2,
+
+    targetRadius: 80,
+
+    opacity: 0,
+
+    glow: 0,
+
+    hover: false,
+
+    hoverAmount: 0,
+
+    /* once clicked, hover animation is permanently disabled */
+    hoverLocked: false
 };
 
-function getMoonRadius() {
-  return clamp(Math.min(width, height) * .115, 48, 94);
+
+function resetMoon() {
+
+    moon.x = W / 2;
+    moon.y = H / 2;
+
+    moon.radius = 2;
+
+    moon.targetRadius =
+        clamp(Math.min(W, H) * .115, 52, 90);
+
+    moon.opacity = 0;
+    moon.glow = 0;
+
+    moon.hover = false;
+    moon.hoverAmount = 0;
+    moon.hoverLocked = false;
 }
 
-function drawMoon(timestamp) {
-  if (moon.opacity <= 0) return;
-
-  const hoverScale = 1 + moon.hoverAmount * .055;
-  const r = moon.radius * hoverScale;
-
-  ctx.save();
-
-  /* Outer atmospheric glow */
-  const outerGlow = r * 3.7;
-  const glow = ctx.createRadialGradient(
-    moon.x, moon.y, r * .12,
-    moon.x, moon.y, outerGlow
-  );
-
-  glow.addColorStop(0, `rgba(255,245,179,${.25 * moon.glowOpacity})`);
-  glow.addColorStop(.18, `rgba(255,226,119,${.16 * moon.glowOpacity})`);
-  glow.addColorStop(.48, `rgba(255,205,85,${.055 * moon.glowOpacity})`);
-  glow.addColorStop(1, "rgba(255,205,85,0)");
-
-  ctx.globalAlpha = moon.opacity;
-  ctx.fillStyle = glow;
-  ctx.beginPath();
-  ctx.arc(moon.x, moon.y, outerGlow, 0, Math.PI * 2);
-  ctx.fill();
-
-  /* Hover halo */
-  if (moon.hoverAmount > .01) {
-    const halo = ctx.createRadialGradient(
-      moon.x, moon.y, r * .8,
-      moon.x, moon.y, r * 1.65
-    );
-    halo.addColorStop(0, `rgba(255,255,230,${.08 * moon.hoverAmount})`);
-    halo.addColorStop(1, "rgba(255,255,230,0)");
-
-    ctx.fillStyle = halo;
-    ctx.beginPath();
-    ctx.arc(moon.x, moon.y, r * 1.65, 0, Math.PI * 2);
-    ctx.fill();
-  }
-
-  /* Moon body */
-  const body = ctx.createRadialGradient(
-    moon.x - r * .34,
-    moon.y - r * .38,
-    r * .08,
-    moon.x,
-    moon.y,
-    r
-  );
-
-  body.addColorStop(0, "#fffdf0");
-  body.addColorStop(.45, "#fff7c5");
-  body.addColorStop(.82, "#ffe99a");
-  body.addColorStop(1, "#f5cf65");
-
-  ctx.fillStyle = body;
-  ctx.globalAlpha = moon.opacity;
-  ctx.beginPath();
-  ctx.arc(moon.x, moon.y, r, 0, Math.PI * 2);
-  ctx.fill();
-
-  /* Craters */
-  ctx.globalAlpha = moon.opacity * .10;
-  ctx.fillStyle = "#b48b45";
-
-  const craters = [
-    [-.26, -.18, .11],
-    [.22, -.30, .07],
-    [.28, .18, .12],
-    [-.10, .31, .075],
-    [-.42, .24, .055]
-  ];
-
-  for (const [cx, cy, cr] of craters) {
-    ctx.beginPath();
-    ctx.arc(
-      moon.x + cx * r,
-      moon.y + cy * r,
-      cr * r,
-      0,
-      Math.PI * 2
-    );
-    ctx.fill();
-  }
-
-  ctx.restore();
-}
 
 /* =========================================================
-   STARS
+   INTRO TYPEWRITER
 ========================================================= */
 
-function createStars() {
-  stars = [];
-  const count = clamp(Math.floor(width * height / 6500), 70, 210);
+async function runIntro() {
 
-  for (let i = 0; i < count; i++) {
-    stars.push({
-      x: Math.random() * width,
-      y: Math.random() * height,
-      size: random(.35, 1.35),
-      alpha: random(.18, .72),
-      phase: Math.random() * Math.PI * 2,
-      speed: random(.35, 1.2),
-      depth: random(.35, 1)
+    state = STATES.INTRO;
+
+    lanternClicks = 0;
+
+    resetMoon();
+
+    const intro = document.getElementById("intro");
+    const text = document.getElementById("introText");
+
+    intro.style.opacity = "1";
+    text.classList.add("type-cursor");
+
+    for (let lineIndex = 0;
+         lineIndex < INTRO_LINES.length;
+         lineIndex++) {
+
+        const line = INTRO_LINES[lineIndex];
+
+        /* TYPE */
+
+        for (let i = 0; i <= line.length; i++) {
+
+            text.textContent =
+                line.substring(0, i);
+
+            await sleep(random(45, 80));
+        }
+
+        /* cursor stays */
+
+        await sleep(900);
+
+        /* BACKSPACE except final line */
+
+        if (lineIndex < INTRO_LINES.length - 1) {
+
+            for (let i = line.length; i >= 0; i--) {
+
+                text.textContent =
+                    line.substring(0, i);
+
+                await sleep(32);
+            }
+
+            await sleep(250);
+        }
+    }
+
+    await sleep(1100);
+
+    text.classList.remove("type-cursor");
+
+    intro.style.opacity = "0";
+
+    await sleep(1000);
+
+    intro.style.display = "none";
+
+    startMoonDot();
+}
+
+
+/* =========================================================
+   MOON DOT → MOON
+========================================================= */
+
+async function startMoonDot() {
+
+    state = STATES.MOON_APPEAR;
+
+    resetMoon();
+
+    /* 3 slow blinks */
+
+    for (let i = 0; i < 3; i++) {
+
+        moon.opacity = .9;
+
+        await sleep(430);
+
+        moon.opacity = .08;
+
+        await sleep(430);
+    }
+
+    moon.opacity = 1;
+
+    const startRadius = 2;
+    const start = performance.now();
+
+    /* VERY SLOW moon expansion */
+
+    await new Promise(resolve => {
+
+        function animate(now) {
+
+            const p =
+                clamp((now - start) / 4800, 0, 1);
+
+            const e = easeOutCubic(p);
+
+            moon.radius =
+                lerp(
+                    startRadius,
+                    moon.targetRadius,
+                    e
+                );
+
+            moon.glow =
+                lerp(0, .72, e);
+
+            if (p < 1) {
+
+                requestAnimationFrame(animate);
+
+            } else {
+
+                resolve();
+            }
+        }
+
+        requestAnimationFrame(animate);
     });
-  }
+
+    state = STATES.SKY;
+    spawnLanterns();
 }
 
-function drawStars(time) {
-  for (const s of stars) {
-    const twinkle = .75 + Math.sin(time * .001 * s.speed + s.phase) * .25;
-
-    ctx.globalAlpha = s.alpha * twinkle;
-    ctx.fillStyle = "rgba(235,241,255,1)";
-
-    ctx.beginPath();
-    ctx.arc(s.x, s.y + cameraOffsetY * (.03 * (1 - s.depth)), s.size, 0, Math.PI * 2);
-    ctx.fill();
-  }
-  ctx.globalAlpha = 1;
-}
 
 /* =========================================================
    LANTERNS
 ========================================================= */
 
-function createLantern() {
-  const scale = random(.72, 1.15);
+let lanterns = [];
 
-  return {
-    x: random(width * .06, width * .94),
-    y: height + random(40, 180),
-    speedY: random(40, 75),
-    swayAmplitude: random(4, 9),
-    swaySpeed: random(.16, .32),
-    swayPhase: Math.random() * Math.PI * 2,
-    scale,
-    size: 29 * scale,
-    alpha: random(.66, .92),
-    rotation: random(-.018, .018),
-    rotationSpeed: random(-.00045, .00045),
-    seed: Math.random() * 100,
-    fade: 1
-  };
+/*
+    IMPORTANT:
+
+    Không sway.
+    Không rotation.
+    Không sine-wave.
+
+    Chỉ bay thẳng lên.
+
+    Spawn nối tiếp:
+    0.0s
+    0.75s
+    1.5s
+    2.25s
+    ...
+
+    Vì tốc độ chậm nên chúng sẽ tạo thành
+    một dòng đèn rải rác.
+*/
+
+function createLantern() {
+
+    const scale = random(.72, 1.04);
+
+    return {
+
+        x: random(W * .08, W * .92),
+
+        y: H + random(35, 80),
+
+        speed:
+            random(17, 25),
+
+        size:
+            30 * scale,
+
+        scale,
+
+        alpha:
+            random(.72, .94),
+
+        clicked: false
+    };
 }
+
 
 function spawnLanterns() {
-  lanterns = [];
-  const total = 14;
 
-  for (let i = 0; i < total; i++) {
-    setTimeout(() => {
-      if (
-        currentState === STATES.INTERACTIVE_SKY ||
-        currentState === STATES.WAITING_LANTERNS_CLEAR
-      ) {
-        lanterns.push(createLantern());
-      }
-    }, i * 720 + random(0, 320));
-  }
+    lanterns = [];
+
+    const total = 16;
+
+    for (let i = 0; i < total; i++) {
+
+        setTimeout(() => {
+
+            if (
+                state === STATES.SKY ||
+                state === STATES.WAIT_LANTERNS
+            ) {
+
+                lanterns.push(
+                    createLantern()
+                );
+            }
+
+        }, i * 760 + random(0, 180));
+    }
 }
 
-function drawLantern(l, time) {
-  const x = l.x + Math.sin(time * .001 * l.swaySpeed + l.swayPhase) * l.swayAmplitude;
-  const y = l.y;
-  const s = l.size;
 
-  ctx.save();
-  ctx.translate(x, y);
-  ctx.rotate(
-    l.rotation +
-    Math.sin(time * .001 + l.seed) * .018
-  );
-  ctx.globalAlpha = l.alpha * l.fade;
+function drawLantern(l) {
 
-  /* Warm aura */
-  const aura = ctx.createRadialGradient(0, 0, 2, 0, 0, s * 2.5);
-  aura.addColorStop(0, "rgba(255,183,91,.28)");
-  aura.addColorStop(.28, "rgba(255,133,61,.12)");
-  aura.addColorStop(1, "rgba(255,133,61,0)");
+    ctx.save();
 
-  ctx.fillStyle = aura;
-  ctx.beginPath();
-  ctx.arc(0, 0, s * 2.5, 0, Math.PI * 2);
-  ctx.fill();
+    ctx.translate(l.x, l.y);
 
-  /* Hanging string */
-  ctx.strokeStyle = "rgba(245,217,156,.62)";
-  ctx.lineWidth = Math.max(.6, s * .025);
-  ctx.beginPath();
-  ctx.moveTo(0, -s * .93);
-  ctx.lineTo(0, -s * .72);
-  ctx.stroke();
+    ctx.globalAlpha = l.alpha;
 
-  /* Top cap */
-  ctx.fillStyle = "#d9893e";
-  ctx.beginPath();
-  ctx.roundRect(-s*.20, -s*.78, s*.40, s*.12, s*.04);
-  ctx.fill();
+    const s = l.size;
 
-  /* Lantern body */
-  const body = ctx.createLinearGradient(-s*.5, 0, s*.5, 0);
-  body.addColorStop(0, "#b94b27");
-  body.addColorStop(.17, "#f47732");
-  body.addColorStop(.50, "#ff9b45");
-  body.addColorStop(.83, "#e45c2c");
-  body.addColorStop(1, "#9f3d24");
+    /* glow */
 
-  ctx.fillStyle = body;
-  ctx.beginPath();
-  ctx.roundRect(-s*.46, -s*.58, s*.92, s*1.16, s*.17);
-  ctx.fill();
+    const glow =
+        ctx.createRadialGradient(
+            0, 0,
+            1,
+            0, 0,
+            s * 1.8
+        );
 
-  /* Ribs */
-  ctx.strokeStyle = "rgba(116,40,25,.35)";
-  ctx.lineWidth = Math.max(.6, s*.025);
+    glow.addColorStop(
+        0,
+        "rgba(255,185,75,.38)"
+    );
 
-  for (const px of [-.30, 0, .30]) {
+    glow.addColorStop(
+        .45,
+        "rgba(255,120,30,.13)"
+    );
+
+    glow.addColorStop(
+        1,
+        "rgba(0,0,0,0)"
+    );
+
+    ctx.fillStyle = glow;
+
     ctx.beginPath();
-    ctx.moveTo(px*s, -s*.49);
-    ctx.quadraticCurveTo(px*s*1.16, 0, px*s, s*.49);
+    ctx.arc(0, 0, s * 1.8, 0, Math.PI * 2);
+    ctx.fill();
+
+
+    /* body */
+
+    const body =
+        ctx.createLinearGradient(
+            -s/2,
+            -s*.65,
+            s/2,
+            s*.65
+        );
+
+    body.addColorStop(
+        0,
+        "#d85b19"
+    );
+
+    body.addColorStop(
+        .5,
+        "#ff8b2c"
+    );
+
+    body.addColorStop(
+        1,
+        "#b83f13"
+    );
+
+    ctx.fillStyle = body;
+
+    ctx.beginPath();
+
+    ctx.roundRect(
+        -s * .42,
+        -s * .57,
+        s * .84,
+        s * 1.08,
+        s * .14
+    );
+
+    ctx.fill();
+
+
+    /* vertical ribs */
+
+    ctx.strokeStyle =
+        "rgba(255,211,125,.32)";
+
+    ctx.lineWidth = 1;
+
+    for (let i = -2; i <= 2; i++) {
+
+        ctx.beginPath();
+
+        ctx.moveTo(
+            i * s * .14,
+            -s * .48
+        );
+
+        ctx.lineTo(
+            i * s * .14,
+            s * .42
+        );
+
+        ctx.stroke();
+    }
+
+
+    /* inner flame */
+
+    const flame =
+        ctx.createRadialGradient(
+            0, 0,
+            0,
+            0, 0,
+            s * .38
+        );
+
+    flame.addColorStop(
+        0,
+        "rgba(255,255,210,.95)"
+    );
+
+    flame.addColorStop(
+        .5,
+        "rgba(255,205,82,.65)"
+    );
+
+    flame.addColorStop(
+        1,
+        "rgba(255,145,40,0)"
+    );
+
+    ctx.fillStyle = flame;
+
+    ctx.beginPath();
+
+    ctx.arc(
+        0,
+        0,
+        s * .38,
+        0,
+        Math.PI * 2
+    );
+
+    ctx.fill();
+
+
+    /* top/bottom */
+
+    ctx.fillStyle =
+        "rgba(255,205,120,.65)";
+
+    ctx.fillRect(
+        -s*.45,
+        -s*.62,
+        s*.9,
+        s*.07
+    );
+
+    ctx.fillRect(
+        -s*.45,
+        s*.45,
+        s*.9,
+        s*.07
+    );
+
+
+    /* little tassel */
+
+    ctx.strokeStyle =
+        "rgba(255,194,102,.65)";
+
+    ctx.beginPath();
+
+    ctx.moveTo(
+        0,
+        s*.52
+    );
+
+    ctx.lineTo(
+        0,
+        s*.82
+    );
+
     ctx.stroke();
-  }
 
-  /* Inner light */
-  const inner = ctx.createRadialGradient(0, 0, 0, 0, 0, s*.43);
-  inner.addColorStop(0, "rgba(255,255,221,.98)");
-  inner.addColorStop(.32, "rgba(255,232,142,.72)");
-  inner.addColorStop(1, "rgba(255,177,71,0)");
+    ctx.beginPath();
 
-  ctx.fillStyle = inner;
-  ctx.beginPath();
-  ctx.arc(0, 0, s*.43, 0, Math.PI*2);
-  ctx.fill();
+    ctx.moveTo(
+        -s*.12,
+        s*.82
+    );
 
-  /* Bottom tassel */
-  ctx.strokeStyle = "#d89b48";
-  ctx.lineWidth = Math.max(.7, s*.03);
+    ctx.lineTo(
+        s*.12,
+        s*.82
+    );
 
-  ctx.beginPath();
-  ctx.moveTo(0, s*.57);
-  ctx.lineTo(0, s*.82);
-  ctx.stroke();
+    ctx.stroke();
 
-  ctx.fillStyle = "#e3a94d";
-  ctx.beginPath();
-  ctx.arc(0, s*.86, s*.055, 0, Math.PI*2);
-  ctx.fill();
-
-  ctx.restore();
+    ctx.restore();
 }
+
 
 function updateLanterns(dt) {
-  for (let i = lanterns.length - 1; i >= 0; i--) {
-    const l = lanterns[i];
 
-    l.y -= l.speedY * dt;
-    l.rotation += l.rotationSpeed * dt * 60;
+    for (
+        let i = lanterns.length - 1;
+        i >= 0;
+        i--
+    ) {
 
-    if (l.y < -80) {
-      if (currentState === STATES.INTERACTIVE_SKY) {
-        lanterns[i] = createLantern();
-      } else {
-        lanterns.splice(i, 1);
-      }
+        const l = lanterns[i];
+
+        /* PURE VERTICAL MOVEMENT */
+
+        l.y -= l.speed * dt;
+
+        drawLantern(l);
+
+        if (l.y < -80) {
+
+            if (state === STATES.SKY) {
+
+                /*
+                    Không recycle ngay lập tức.
+                    Chờ spawn queue tạo lantern tiếp theo.
+                    Như vậy luồng đèn luôn rải rác.
+                */
+
+                lanterns.splice(i, 1);
+
+            } else {
+
+                lanterns.splice(i, 1);
+            }
+        }
     }
-  }
 
-  if (
-    currentState === STATES.WAITING_LANTERNS_CLEAR &&
-    lanterns.length === 0
-  ) {
-    currentState = STATES.MOON_GLOWING_UP;
-    moon.glowOpacity = 0;
-    animateMoonGlow();
-  }
+    if (
+        state === STATES.WAIT_LANTERNS &&
+        lanterns.length === 0
+    ) {
+
+        startMoonReady();
+    }
 }
 
-function animateMoonGlow() {
-  const start = performance.now();
-
-  function frame(now) {
-    if (currentState !== STATES.MOON_GLOWING_UP) return;
-
-    const p = clamp((now - start) / 4200, 0, 1);
-    const e = easeInOutCubic(p);
-
-    moon.glowOpacity = lerp(.28, 1, e);
-
-    if (p < 1) requestAnimationFrame(frame);
-  }
-
-  requestAnimationFrame(frame);
-}
 
 /* =========================================================
-   INTRO
+   MOON DRAW
 ========================================================= */
 
-const introLines = [
-  "25-9-2026",
-  "Rằm tháng 8 rồi đấy",
-  "Thế em bé đã có quà gì chưa",
-  "Tặng em bé một mặt trăng nhỏ nhé!"
-];
+function drawMoon() {
 
-async function runIntroTypewriter() {
-  lanternClicks = 0;
-  currentState = STATES.INTRO_TYPING;
-  introScreen.style.display = "flex";
-  introScreen.style.opacity = "1";
+    if (moon.opacity <= 0) return;
 
-  typewriterText.classList.add("blinking-cursor");
+    let r =
+        moon.radius *
+        (1 + moon.hoverAmount * .055);
 
-  for (let lineIndex = 0; lineIndex < introLines.length; lineIndex++) {
-    const line = introLines[lineIndex];
+    const glowR =
+        r *
+        (2.4 + moon.hoverAmount * .7);
 
-    for (let i = 0; i <= line.length; i++) {
-      typewriterText.textContent = line.slice(0, i);
-      await sleep(random(42, 76));
+
+    /* outer glow */
+
+    const glow =
+        ctx.createRadialGradient(
+            moon.x,
+            moon.y,
+            r * .3,
+            moon.x,
+            moon.y,
+            glowR
+        );
+
+    glow.addColorStop(
+        0,
+        `rgba(255,241,164,${moon.glow * .48})`
+    );
+
+    glow.addColorStop(
+        .38,
+        `rgba(255,224,96,${moon.glow * .18})`
+    );
+
+    glow.addColorStop(
+        1,
+        "rgba(255,220,100,0)"
+    );
+
+    ctx.fillStyle = glow;
+
+    ctx.beginPath();
+    ctx.arc(
+        moon.x,
+        moon.y,
+        glowR,
+        0,
+        Math.PI * 2
+    );
+
+    ctx.fill();
+
+
+    /* moon body */
+
+    const gradient =
+        ctx.createRadialGradient(
+            moon.x - r*.35,
+            moon.y - r*.38,
+            r*.08,
+
+            moon.x,
+            moon.y,
+            r
+        );
+
+    gradient.addColorStop(
+        0,
+        "#fffef3"
+    );
+
+    gradient.addColorStop(
+        .58,
+        "#fff4b4"
+    );
+
+    gradient.addColorStop(
+        1,
+        "#e9c968"
+    );
+
+    ctx.globalAlpha =
+        moon.opacity;
+
+    ctx.fillStyle = gradient;
+
+    ctx.beginPath();
+
+    ctx.arc(
+        moon.x,
+        moon.y,
+        r,
+        0,
+        Math.PI * 2
+    );
+
+    ctx.fill();
+
+
+    /* subtle craters */
+
+    ctx.globalAlpha =
+        moon.opacity * .12;
+
+    ctx.fillStyle = "#9d8139";
+
+    const craters = [
+        [-.28,-.18,.12],
+        [.22,-.30,.08],
+        [.32,.12,.13],
+        [-.18,.30,.07],
+        [-.38,.22,.055]
+    ];
+
+    for (const c of craters) {
+
+        ctx.beginPath();
+
+        ctx.arc(
+            moon.x + c[0] * r,
+            moon.y + c[1] * r,
+            c[2] * r,
+            0,
+            Math.PI * 2
+        );
+
+        ctx.fill();
     }
 
-    await sleep(1500);
-
-    if (lineIndex < introLines.length - 1) {
-      for (let i = line.length; i >= 0; i--) {
-        typewriterText.textContent = line.slice(0, i);
-        await sleep(random(27, 42));
-      }
-      await sleep(260);
-    }
-  }
-
-  await sleep(1150);
-
-  typewriterText.classList.remove("blinking-cursor");
-  introScreen.style.opacity = "0";
-
-  await sleep(1150);
-  introScreen.style.display = "none";
-
-  startDotSequence();
+    ctx.globalAlpha = 1;
 }
+
 
 /* =========================================================
-   MOON INTRO AWAKENING
+   MOON HOVER
 ========================================================= */
 
-function startDotSequence() {
-  currentState = STATES.DOT_BLINKING;
-
-  moon.x = width * .5;
-  moon.y = height * .47;
-  moon.radius = 1.6;
-  moon.opacity = 0;
-  moon.glowOpacity = 0;
-  moon.hoverAmount = 0;
-  moon.isAwake = false;
-  moon.lockY = false;
-
-  let count = 0;
-
-  const interval = setInterval(() => {
-    moon.opacity = moon.opacity > .1 ? 0 : .92;
-    count++;
-
-    if (count >= 6) {
-      clearInterval(interval);
-      startMoonAwakening();
-    }
-  }, 360);
-}
-
-function startMoonAwakening() {
-  currentState = STATES.MOON_AWAKENING;
-
-  const startR = 1.6;
-  const endR = getMoonRadius();
-  const start = performance.now();
-
-  moon.opacity = 1;
-  moon.targetRadius = endR;
-
-  function frame(now) {
-    const p = clamp((now - start) / 4200, 0, 1);
-    const e = easeOutQuart(p);
-
-    moon.radius = lerp(startR, endR, e);
-    moon.glowOpacity = lerp(.08, .78, e);
-
-    if (p < 1) {
-      requestAnimationFrame(frame);
-    } else {
-      moon.isAwake = true;
-    }
-  }
-
-  requestAnimationFrame(frame);
-}
-
-/* =========================================================
-   CARD SYSTEM
-========================================================= */
-
-async function openGreetingCard(index) {
-  if (activeCardOpen || index < 0 || index >= GREETINGS.length) return;
-
-  activeCardOpen = true;
-
-  cardText.textContent = "";
-  cardFooter.classList.remove("show");
-
-  cardModal.classList.add("open");
-  cardText.classList.add("blinking-cursor");
-
-  await sleep(430);
-
-  const text = GREETINGS[index];
-
-  for (let i = 0; i <= text.length; i++) {
-    if (!activeCardOpen) return;
-
-    cardText.textContent = text.slice(0, i);
-    await sleep(random(28, 44));
-  }
-
-  await sleep(650);
-
-  cardText.classList.remove("blinking-cursor");
-  await sleep(350);
-  cardFooter.classList.add("show");
-}
-
-function closeGreetingCard() {
-  if (!activeCardOpen) return;
-
-  activeCardOpen = false;
-
-  cardModal.classList.remove("open");
-  cardText.classList.remove("blinking-cursor");
-  cardFooter.classList.remove("show");
-
-  lanternClicks = Math.min(lanternClicks + 1, LANTERN_LIMIT);
-
-  if (lanternClicks >= LANTERN_LIMIT) {
-    currentState = STATES.WAITING_LANTERNS_CLEAR;
-  }
-}
-
-cardModal.addEventListener("click", e => {
-  if (e.target === cardModal) {
-    closeGreetingCard();
-  }
-});
-
-/* =========================================================
-   POINTER
-========================================================= */
-
-function pointerPosition(e) {
-  const rect = canvas.getBoundingClientRect();
-
-  return {
-    x: e.clientX - rect.left,
-    y: e.clientY - rect.top - cameraOffsetY
-  };
-}
+let mouseX = 0;
+let mouseY = 0;
 
 canvas.addEventListener("mousemove", e => {
-  const { x, y } = pointerPosition(e);
 
-  const moonInteractive =
-    currentState === STATES.MOON_AWAKENING ||
-    currentState === STATES.INTERACTIVE_SKY ||
-    currentState === STATES.MOON_GLOWING_UP;
+    mouseX = e.clientX;
+    mouseY = e.clientY;
 
-  if (moonInteractive) {
-    const dist = Math.hypot(x - moon.x, y - moon.y);
-    const target = dist < moon.radius * 1.45 ? 1 : 0;
-    moon.hoverAmount += (target - moon.hoverAmount) * .16;
-  } else {
-    moon.hoverAmount *= .82;
-  }
+    if (
+        moon.hoverLocked ||
+        state === STATES.MOON_SHRINK ||
+        state === STATES.CAMERA ||
+        state === STATES.FIREWORKS ||
+        state === STATES.LOVE_FOREVER
+    ) {
+
+        moon.hover = false;
+        return;
+    }
+
+    if (
+        state === STATES.MOON_APPEAR ||
+        state === STATES.SKY ||
+        state === STATES.MOON_READY
+    ) {
+
+        const dx =
+            mouseX - moon.x;
+
+        const dy =
+            mouseY -
+            (moon.y + cameraOffsetY);
+
+        const distance =
+            Math.hypot(dx, dy);
+
+        moon.hover =
+            distance <
+            moon.radius * 1.35;
+    }
 });
 
-canvas.addEventListener("mouseleave", () => {
-  moon.hoverAmount *= .5;
-});
 
-canvas.addEventListener("click", e => {
-  if (activeCardOpen) return;
+/* Smooth hover amount */
 
-  const { x, y } = pointerPosition(e);
+function updateMoonHover(dt) {
 
-  if (currentState === STATES.MOON_AWAKENING) {
-    const dist = Math.hypot(x - moon.x, y - moon.y);
+    const target =
+        moon.hover &&
+        !moon.hoverLocked
+            ? 1
+            : 0;
 
-    if (dist < moon.radius * 1.5) {
-      currentState = STATES.INTERACTIVE_SKY;
-      moon.hoverAmount = 0;
-      spawnLanterns();
-    }
-    return;
-  }
+    /*
+        Slow enough to feel like light
+        rather than a button animation.
+    */
 
-  if (currentState === STATES.INTERACTIVE_SKY) {
-    for (let i = lanterns.length - 1; i >= 0; i--) {
-      const l = lanterns[i];
+    moon.hoverAmount +=
+        (target - moon.hoverAmount) *
+        Math.min(1, dt * 5);
+}
 
-      const lx =
-        l.x +
-        Math.sin(performance.now() * .001 * l.swaySpeed + l.swayPhase)
-        * l.swayAmplitude;
-
-      const ly = l.y;
-      const hit = Math.hypot(x - lx, y - ly);
-
-      if (hit < l.size * 1.35) {
-        lanterns.splice(i, 1);
-        if (lanternClicks + 1 < LANTERN_LIMIT) {
-          lanterns.push(createLantern());
-        }
-        openGreetingCard(lanternClicks);
-        break;
-      }
-    }
-    return;
-  }
-
-  if (currentState === STATES.MOON_GLOWING_UP) {
-    const dist = Math.hypot(x - moon.x, y - moon.y);
-
-    if (dist < moon.radius * 1.55) {
-      triggerOutroSequence();
-    }
-  }
-});
-
-canvas.addEventListener("touchend", e => {
-  if (activeCardOpen || !e.changedTouches.length) return;
-
-  const t = e.changedTouches[0];
-  const fake = { clientX: t.clientX, clientY: t.clientY };
-
-  canvas.dispatchEvent(new MouseEvent("click", fake));
-}, { passive: true });
 
 /* =========================================================
-   OUTRO
-========================================================= */
-
-async function triggerOutroSequence() {
-  if (currentState !== STATES.MOON_GLOWING_UP) return;
-
-  currentState = STATES.MOON_SHRINKING;
-
-  const startRadius = moon.radius;
-  const endRadius = 7;
-  const start = performance.now();
-
-  await new Promise(resolve => {
-    function frame(now) {
-      const p = clamp((now - start) / 1400, 0, 1);
-      const e = easeInOutCubic(p);
-
-      moon.radius = lerp(startRadius, endRadius, e);
-      moon.glowOpacity = lerp(1, .16, e);
-
-      if (p < 1) {
-        requestAnimationFrame(frame);
-      } else {
-        resolve();
-      }
-    }
-    requestAnimationFrame(frame);
-  });
-
-  await sleep(4000);
-
-  currentState = STATES.CAMERA_PANNING;
-  targetCameraOffsetY = -height * .30;
-
-  const cameraStart = performance.now();
-  const cameraDuration = 3300;
-  const startOffset = cameraOffsetY;
-
-  await new Promise(resolve => {
-    function frame(now) {
-      const p = clamp((now - cameraStart) / cameraDuration, 0, 1);
-      cameraOffsetY = lerp(startOffset, targetCameraOffsetY, easeInOutCubic(p));
-
-      if (p < 1) {
-        requestAnimationFrame(frame);
-      } else {
-        resolve();
-      }
-    }
-    requestAnimationFrame(frame);
-  });
-
-  await sleep(1500);
-
-  currentState = STATES.FIREWORKS_SHOW;
-
-  const fireworkInterval = setInterval(() => {
-    if (currentState === STATES.FIREWORKS_SHOW) {
-      launchRandomFirework();
-    }
-  }, 620);
-
-  launchRandomFirework();
-
-  await sleep(10000);
-  clearInterval(fireworkInterval);
-
-  currentState = STATES.FIREWORKS_PAUSE;
-  await sleep(3000);
-
-  currentState = STATES.LOVE_FOREVER_BURST;
-  launchLoveForeverBurst();
-
-  await sleep(6500);
-
-  currentState = STATES.ENDING_TEXT;
-  endingScreen.classList.add("visible");
-
-  await sleep(500);
-  endingText1.classList.add("show");
-
-  await sleep(3200);
-  endingText1.classList.remove("show");
-
-  await sleep(1300);
-  endingText2.classList.add("show");
-
-  await sleep(4300);
-  endingText2.classList.remove("show");
-
-  await sleep(1500);
-  endingScreen.classList.remove("visible");
-}
-
-/* =========================================================
-   FIREWORKS
-========================================================= */
-
-const FIREWORK_COLORS = [
-  "#ffe8a3",
-  "#ffd166",
-  "#ff9f7a",
-  "#f7b7ff",
-  "#9fd8ff",
-  "#c9f7dc"
-];
-
-function launchRandomFirework() {
-  const worldBottom = height - cameraOffsetY;
-  const x = random(width * .13, width * .87);
-  const targetY = height * random(.13, .49) - cameraOffsetY;
-
-  fireworks.push({
-    x,
-    y: worldBottom + 10,
-    prevY: worldBottom + 10,
-    targetY,
-    speed: random(480, 650),
-    color: FIREWORK_COLORS[Math.floor(Math.random() * FIREWORK_COLORS.length)],
-    trailAlpha: random(.35, .62)
-  });
-}
-
-function createExplosion(x, y, color, strength = 1) {
-  const count = Math.round(random(75, 105) * strength);
-
-  for (let i = 0; i < count; i++) {
-    const angle = Math.random() * Math.PI * 2;
-    const speed = Math.pow(Math.random(), .55) * random(80, 210) * strength;
-
-    particles.push({
-      x,
-      y,
-      vx: Math.cos(angle) * speed,
-      vy: Math.sin(angle) * speed,
-      gravity: random(32, 58),
-      drag: random(.972, .985),
-      alpha: 1,
-      decay: random(.18, .30),
-      size: random(.65, 1.65),
-      color
-    });
-  }
-}
-
-function launchLoveForeverBurst() {
-  const count = width < 600 ? 17 : 25;
-  const centerIdx = Math.floor(count / 2);
-
-  for (let i = 0; i < count; i++) {
-    const spread = width * .76;
-
-    fireworks.push({
-      x: width * .5 + random(-spread/2, spread/2),
-      y: height - cameraOffsetY + 10,
-      prevY: height - cameraOffsetY + 10,
-      targetY: height * random(.16, .39) - cameraOffsetY,
-      speed: random(520, 720),
-      color: "#ffe9a3",
-      trailAlpha: .55,
-      isTextRocket: (i === centerIdx)
-    });
-  }
-}
-
-function updateFireworks(dt) {
-  for (let i = fireworks.length - 1; i >= 0; i--) {
-    const fw = fireworks[i];
-    fw.prevY = fw.y;
-    fw.y -= fw.speed * dt;
-
-    if (fw.y <= fw.targetY) {
-      if (fw.isTextRocket) {
-        createTextParticles(fw.x, fw.y);
-      } else {
-        createExplosion(fw.x, fw.y, fw.color);
-      }
-      fireworks.splice(i, 1);
-    }
-  }
-}
-
-function drawFireworks() {
-  for (const fw of fireworks) {
-    ctx.strokeStyle = fw.color;
-    ctx.lineWidth = 1.8;
-    ctx.globalAlpha = fw.trailAlpha || 0.6;
-    ctx.beginPath();
-    ctx.moveTo(fw.x, fw.prevY);
-    ctx.lineTo(fw.x, fw.y);
-    ctx.stroke();
-  }
-  ctx.globalAlpha = 1;
-}
-
-function updateParticles(dt) {
-  for (let i = particles.length - 1; i >= 0; i--) {
-    const p = particles[i];
-    p.x += p.vx * dt;
-    p.y += p.vy * dt;
-    p.vy += p.gravity * dt;
-    p.vx *= Math.pow(p.drag, dt * 60);
-    p.vy *= Math.pow(p.drag, dt * 60);
-    p.alpha -= p.decay * dt;
-
-    if (p.alpha <= 0) {
-      particles.splice(i, 1);
-    }
-  }
-}
-
-function drawParticles() {
-  for (const p of particles) {
-    if (p.alpha <= 0) continue;
-    ctx.globalAlpha = Math.max(0, p.alpha);
-    ctx.fillStyle = p.color;
-    ctx.beginPath();
-    ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
-    ctx.fill();
-  }
-  ctx.globalAlpha = 1;
-}
-
-/* =========================================================
-   TEXT PARTICLES
-========================================================= */
-
-function createTextParticles(cx, cy) {
-  const tCanvas = document.createElement("canvas");
-  const tCtx = tCanvas.getContext("2d");
-
-  const fontSize = clamp(width * .075, 34, 76);
-
-  tCanvas.width = 1300;
-  tCanvas.height = 260;
-
-  tCtx.clearRect(0, 0, tCanvas.width, tCanvas.height);
-  tCtx.fillStyle = "#fff";
-  tCtx.font = `700 ${fontSize}px Quicksand, sans-serif`;
-  tCtx.textAlign = "center";
-  tCtx.textBaseline = "middle";
-  tCtx.fillText("LOVE FOREVER", tCanvas.width / 2, tCanvas.height / 2);
-
-  const image = tCtx.getImageData(0, 0, tCanvas.width, tCanvas.height);
-  const step = width < 600 ? 8 : 7;
-  const scale = clamp(width / 1050, .55, 1);
-
-  textParticles = [];
-
-  for (let y = 0; y < tCanvas.height; y += step) {
-    for (let x = 0; x < tCanvas.width; x += step) {
-      const idx = (y * tCanvas.width + x) * 4;
-
-      if (image.data[idx + 3] > 150) {
-        const tx = cx + (x - tCanvas.width/2) * scale;
-        const ty = cy + (y - tCanvas.height/2) * scale;
-
-        textParticles.push({
-          x: cx + random(-10, 10),
-          y: cy + random(-10, 10),
-          targetX: tx,
-          targetY: ty,
-          alpha: 0,
-          life: 0,
-          delay: random(0, 400),
-          size: random(.8, 1.45)
-        });
-      }
-    }
-  }
-}
-
-function updateTextParticles(dt) {
-  for (let i = textParticles.length - 1; i >= 0; i--) {
-    const tp = textParticles[i];
-
-    if (tp.delay > 0) {
-      tp.delay -= dt * 1000;
-      continue;
-    }
-
-    tp.life += dt;
-    const progress = clamp(tp.life / 0.8, 0, 1);
-    const ease = easeOutCubic(progress);
-
-    tp.x = lerp(tp.x, tp.targetX, ease * 0.2);
-    tp.y = lerp(tp.y, tp.targetY, ease * 0.2);
-    tp.alpha = Math.min(tp.life * 2.5, 1);
-
-    if (tp.life > 3.5) {
-      tp.alpha -= dt * 0.6;
-    }
-
-    if (tp.alpha <= 0) {
-      textParticles.splice(i, 1);
-    }
-  }
-}
-
-function drawTextParticles() {
-  for (const tp of textParticles) {
-    if (tp.delay > 0 || tp.alpha <= 0) continue;
-    ctx.globalAlpha = Math.max(0, tp.alpha);
-    ctx.fillStyle = "#ffe9a3";
-    ctx.beginPath();
-    ctx.arc(tp.x, tp.y, tp.size, 0, Math.PI * 2);
-    ctx.fill();
-  }
-  ctx.globalAlpha = 1;
-}
-
-/* =========================================================
-   SILHOUETTES
-========================================================= */
-
-function drawSilhouettes(time) {
-  if (cameraOffsetY > -20) return;
-
-  const groundY = height - 10;
-  const center = width * .5;
-
-  /* Distant hill */
-  ctx.fillStyle = "rgba(1,4,10,.95)";
-  ctx.beginPath();
-  ctx.ellipse(
-    center,
-    groundY + 80,
-    width * .72,
-    140,
-    0, Math.PI, 0
-  );
-  ctx.fill();
-
-  /* Silhouettes */
-  const silY = groundY - 10;
-  ctx.fillStyle = "#040814";
-
-  // Nam
-  ctx.beginPath();
-  ctx.arc(center - 16, silY - 42, 11, 0, Math.PI * 2);
-  ctx.fill();
-  ctx.beginPath();
-  ctx.ellipse(center - 14, silY - 16, 15, 22, 0.12, 0, Math.PI * 2);
-  ctx.fill();
-
-  // Nữ tựa đầu
-  ctx.beginPath();
-  ctx.arc(center + 6, silY - 37, 9.5, 0, Math.PI * 2);
-  ctx.fill();
-  ctx.beginPath();
-  ctx.ellipse(center + 8, silY - 14, 13, 20, -0.15, 0, Math.PI * 2);
-  ctx.fill();
-}
-
-/* =========================================================
-   MAIN LOOP
-========================================================= */
-
-function loop(now) {
-  const dt = Math.min((now - lastFrameTime) / 1000, 0.1);
-  lastFrameTime = now;
-
-  ctx.clearRect(0, 0, width, height);
-
-  ctx.save();
-  ctx.translate(0, cameraOffsetY);
-
-  drawStars(now);
-  drawMoon(now);
-
-  updateLanterns(dt);
-  for (const l of lanterns) drawLantern(l, now);
-
-  updateFireworks(dt);
-  drawFireworks();
-
-  updateParticles(dt);
-  drawParticles();
-
-  updateTextParticles(dt);
-  drawTextParticles();
-
-  drawSilhouettes(now);
-
-  ctx.restore();
-
-  requestAnimationFrame(loop);
-}
-
-window.onload = () => {
-  resize();
-  runIntroTypewriter();
-  requestAnimationFrame(loop);
-};
-</script>
-</body>
-</html>
+   CARD
+=================================
+```
