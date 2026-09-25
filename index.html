@@ -38,6 +38,15 @@
       margin-left: 2px;
     }
 
+    #finalTypingScreen {
+      text-shadow: 0 0 18px rgba(254, 240, 138, 0.10);
+      transition: opacity 1.8s ease;
+    }
+
+    #finalTypingText {
+      max-width: 900px;
+    }
+
     @keyframes blink {
       0%, 100% { opacity: 1; }
       50% { opacity: 0; }
@@ -90,12 +99,17 @@
 
   <!-- ENDING TEXT SCREEN -->
   <div id="endingScreen" class="ui-layer fixed inset-0 flex flex-col items-center justify-center p-6 text-center pointer-events-none z-40">
-    <p id="endingText1" class="text-2xl sm:text-3xl md:text-4xl font-light tracking-widest text-amber-100/90 opacity-0 transition-opacity duration-1000 my-2 font-handwriting">
+    <p id="endingText1" class="text-2xl sm:text-3xl md:text-4xl font-light tracking-widest text-amber-100/90 opacity-0 my-2 font-handwriting">
       Trung Thu Vui Vẻ Nhé
     </p>
-    <p id="endingText2" class="text-base sm:text-lg text-rose-200/80 opacity-0 transition-opacity duration-1000 mt-4 tracking-wider">
+    <p id="endingText2" class="text-base sm:text-lg md:text-xl text-rose-200/80 opacity-0 mt-4 tracking-wider">
       Em Bé Của Em ❤️
     </p>
+  </div>
+
+  <!-- FINAL TYPEWRITER SCREEN -->
+  <div id="finalTypingScreen" class="ui-layer fixed inset-0 flex items-center justify-center p-6 text-center pointer-events-none z-40 opacity-0">
+    <p id="finalTypingText" class="whitespace-pre-line text-lg sm:text-xl md:text-2xl text-amber-100/90 leading-loose tracking-wide font-normal"></p>
   </div>
 
   <script>
@@ -121,8 +135,6 @@
       MOON_SHRINKING: 'MOON_SHRINKING',
       CAMERA_PANNING: 'CAMERA_PANNING',
       FIREWORKS_SHOW: 'FIREWORKS_SHOW',
-      FIREWORKS_PAUSE: 'FIREWORKS_PAUSE',
-      LOVE_FOREVER_BURST: 'LOVE_FOREVER_BURST',
       ENDING_TEXT: 'ENDING_TEXT'
     };
 
@@ -151,6 +163,8 @@
     const cardFooter = document.getElementById('cardFooter');
     const endingText1 = document.getElementById('endingText1');
     const endingText2 = document.getElementById('endingText2');
+    const finalTypingScreen = document.getElementById('finalTypingScreen');
+    const finalTypingText = document.getElementById('finalTypingText');
 
     // Canvas Dimensions & Camera Offset
     let width, height;
@@ -177,8 +191,6 @@
     let stars = [];
     let lanterns = [];
     let fireworks = [];
-    let particles = [];
-    let textParticles = [];
 
     // Moon Properties
     const moon = {
@@ -193,6 +205,43 @@
       hoverLocked: false,
       hoverAmount: 0
     };
+
+    // Cache moon rendering so the awakening does not rebuild radial gradients every frame.
+    const moonGlowSprite = document.createElement('canvas');
+    const moonBodySprite = document.createElement('canvas');
+    const MOON_GLOW_SIZE = 640;
+    const MOON_BODY_SIZE = 320;
+
+    function buildMoonSprites() {
+      moonGlowSprite.width = moonGlowSprite.height = MOON_GLOW_SIZE;
+      const gc = moonGlowSprite.getContext('2d');
+      const g = gc.createRadialGradient(
+        MOON_GLOW_SIZE / 2, MOON_GLOW_SIZE / 2, 0,
+        MOON_GLOW_SIZE / 2, MOON_GLOW_SIZE / 2, MOON_GLOW_SIZE / 2
+      );
+      g.addColorStop(0, 'rgba(254, 240, 138, 0.32)');
+      g.addColorStop(0.20, 'rgba(254, 240, 138, 0.18)');
+      g.addColorStop(0.48, 'rgba(253, 224, 71, 0.06)');
+      g.addColorStop(1, 'rgba(253, 224, 71, 0)');
+      gc.fillStyle = g;
+      gc.fillRect(0, 0, MOON_GLOW_SIZE, MOON_GLOW_SIZE);
+
+      moonBodySprite.width = moonBodySprite.height = MOON_BODY_SIZE;
+      const bc = moonBodySprite.getContext('2d');
+      const b = bc.createRadialGradient(
+        MOON_BODY_SIZE * 0.34, MOON_BODY_SIZE * 0.32, MOON_BODY_SIZE * 0.08,
+        MOON_BODY_SIZE * 0.50, MOON_BODY_SIZE * 0.50, MOON_BODY_SIZE * 0.50
+      );
+      b.addColorStop(0, '#fffdf0');
+      b.addColorStop(0.18, '#fffdf0');
+      b.addColorStop(0.72, '#fef08a');
+      b.addColorStop(1, '#f5c928');
+      bc.fillStyle = b;
+      bc.beginPath();
+      bc.arc(MOON_BODY_SIZE / 2, MOON_BODY_SIZE / 2, MOON_BODY_SIZE * 0.48, 0, Math.PI * 2);
+      bc.fill();
+    }
+    buildMoonSprites();
 
     // --- INTRO TYPEWRITER LOGIC ---
     const introLines = [
@@ -282,7 +331,7 @@
         // Slow cinematic expansion: gentle at the beginning and end.
         const ease = 0.5 - Math.cos(progress * Math.PI) / 2;
         moon.radius = 1.5 + (moon.targetRadius - 1.5) * ease;
-        moon.glowOpacity = ease * 0.8;
+        moon.glowOpacity = ease * 0.26;
 
         if (progress < 1) {
           requestAnimationFrame(animateAwake);
@@ -409,8 +458,6 @@
 
       // Fireworks are fully automatic. Clicking never launches or detonates them.
       if (currentState === STATES.FIREWORKS_SHOW ||
-          currentState === STATES.FIREWORKS_PAUSE ||
-          currentState === STATES.LOVE_FOREVER_BURST ||
           currentState === STATES.ENDING_TEXT) {
         return;
       }
@@ -457,7 +504,7 @@
     async function triggerOutroSequence() {
       currentState = STATES.MOON_SHRINKING;
 
-      // Fast-settle shrink animation
+      // Calm moon shrink.
       const startR = moon.radius;
       const targetR = 8;
       let startTime = null;
@@ -465,7 +512,7 @@
       await new Promise(resolve => {
         function shrink(time) {
           if (!startTime) startTime = time;
-          let p = (time - startTime) / 1800; // Calm 1.8s
+          let p = (time - startTime) / 2600;
           if (p > 1) p = 1;
           const ease = 0.5 - Math.cos(p * Math.PI) / 2;
           moon.radius = startR - (startR - targetR) * ease;
@@ -475,20 +522,19 @@
         requestAnimationFrame(shrink);
       });
 
-      // Pause 5s silently
       await sleep(5000);
 
-      // Camera pan down 1/3 height
+      // Camera pan down 1/3 height — preserved from the original ending.
       currentState = STATES.CAMERA_PANNING;
       targetCameraOffsetY = -height * 0.28;
-      
+
       let panStartTime = null;
       await new Promise(resolve => {
         function pan(time) {
           if (!panStartTime) panStartTime = time;
-          let p = (time - panStartTime) / 3500; // Smooth 3.5s pan
+          let p = (time - panStartTime) / 3500;
           if (p > 1) p = 1;
-          const ease = 0.5 - Math.cos(p * Math.PI) / 2; // Ease in-out
+          const ease = 0.5 - Math.cos(p * Math.PI) / 2;
           cameraOffsetY = targetCameraOffsetY * ease;
           if (p < 1) requestAnimationFrame(pan);
           else resolve();
@@ -496,38 +542,66 @@
         requestAnimationFrame(pan);
       });
 
-      // Pause 2s showing silhouettes
       await sleep(2000);
 
-      // Start 10s automatic fireworks show. No pointer event launches fireworks.
+      // 20s automatic fireworks show. No click launches fireworks.
       currentState = STATES.FIREWORKS_SHOW;
-      particles.length = 0;
       clearFireworkEngine();
       fireworkShowTick();
       const fireworkInterval = setInterval(fireworkShowTick, 760);
 
-      await sleep(10000);
+      await sleep(20000);
       clearInterval(fireworkInterval);
-
-      // 3s Quiet Pause
-      currentState = STATES.FIREWORKS_PAUSE;
-      await sleep(3000);
-
-      // Love Forever Grand Burst
-      currentState = STATES.LOVE_FOREVER_BURST;
-      particles.length = 0;
       clearFireworkEngine();
-      launchLoveForeverBurst();
 
-      await sleep(5000);
-
-      // Ending Screen Fade In
+      // No Love Forever burst and no quiet pause: start the ending immediately.
       currentState = STATES.ENDING_TEXT;
-      endingText1.style.opacity = '1';
-      await sleep(3000);
-      endingText1.style.opacity = '0';
-      await sleep(1500);
-      endingText2.style.opacity = '1';
+      await fadeElement(endingText1, 0, 1, 3000);
+      await sleep(1000);
+      await fadeElement(endingText1, 1, 0, 3000);
+      await sleep(900);
+      await fadeElement(endingText2, 0, 1, 3000);
+      await sleep(1000);
+      await fadeElement(endingText2, 1, 0, 3000);
+      await sleep(1000);
+
+      await runFinalTypewriter();
+    }
+
+    function fadeElement(el, from, to, duration) {
+      return new Promise(resolve => {
+        el.style.transition = `opacity ${duration}ms ease-in-out`;
+        el.style.opacity = String(from);
+        requestAnimationFrame(() => requestAnimationFrame(() => {
+          el.style.opacity = String(to);
+        }));
+        setTimeout(resolve, duration);
+      });
+    }
+
+    async function runFinalTypewriter() {
+      finalTypingScreen.style.opacity = '1';
+      finalTypingText.innerText = '';
+      finalTypingText.classList.add('blinking-cursor');
+
+      const typeInto = async (text, speed = 58) => {
+        const current = finalTypingText.innerText;
+        for (let i = 1; i <= text.length; i++) {
+          finalTypingText.innerText = current + text.substring(0, i);
+          await sleep(speed + Math.random() * 26);
+        }
+      };
+
+      await typeInto('Hà Nội, ngày 25 tháng 9 năm 2026');
+      await sleep(1000);
+      await typeInto('\nChúc em bé trung thu thật vui vẻ');
+      await sleep(500);
+      await typeInto('\nFrom:');
+      await sleep(2000);
+      await typeInto(' Mot nguoi yeu');
+
+      // Stop here. The final frame remains on screen.
+      finalTypingText.classList.remove('blinking-cursor');
     }
 
     // --- FIREWORKS ENGINE (adapted from the supplied reference) ---
@@ -1118,19 +1192,6 @@
       }
     }
 
-    function launchLoveForeverBurst() {
-      // Seven simultaneous gold shells, with the center shell forming the text.
-      for (let i = -3; i <= 3; i++) {
-        const shell = new FWShell(fwCrysanthemumShell(2.8));
-        const xPos = 0.5 + (i * 0.055);
-        shell.launch(xPos, 0.34);
-        if (i === 0) {
-          // Replace the center comet death burst with the text-forming effect.
-          shell.comet.onDeath = comet => createTextParticles(comet.x, comet.y);
-        }
-      }
-    }
-
     function updateFireworkPhysics(frameTime) {
       const lag = Math.max(0.15, Math.min(4.1, frameTime / 16.6667));
       const timeStep = Math.min(68, Math.max(0, frameTime));
@@ -1234,10 +1295,7 @@
 
     function drawFireworkLayers() {
       // Fade the trails canvas for a photographic light-trail feel.
-      const activeFireworks =
-        currentState === STATES.FIREWORKS_SHOW ||
-        currentState === STATES.FIREWORKS_PAUSE ||
-        currentState === STATES.LOVE_FOREVER_BURST;
+      const activeFireworks = currentState === STATES.FIREWORKS_SHOW;
 
       if (!activeFireworks) {
         trailsCtx.clearRect(0, 0, width, height);
@@ -1310,11 +1368,7 @@
       fwLastTimestamp = timestamp;
 
       // Physics first so trails follow the exact current segment.
-      if (
-        currentState === STATES.FIREWORKS_SHOW ||
-        currentState === STATES.FIREWORKS_PAUSE ||
-        currentState === STATES.LOVE_FOREVER_BURST
-      ) {
+      if (currentState === STATES.FIREWORKS_SHOW) {
         updateFireworkPhysics(frameTime);
       }
 
@@ -1337,50 +1391,34 @@
         ctx.fill();
       }
 
-      // 2. Draw Moon.
+      // 2. Draw Moon — cached sprites keep the animation smooth and restrained.
       if (moon.opacity > 0) {
         ctx.save();
 
         const hoverTarget = (!moon.hoverLocked && moon.isHovered) ? 1 : 0;
         moon.hoverAmount = (moon.hoverAmount || 0) + (hoverTarget - (moon.hoverAmount || 0)) * 0.08;
-        const currentR = moon.radius * (1 + moon.hoverAmount * 0.08);
+        const currentR = moon.radius * (1 + moon.hoverAmount * 0.05);
 
-        const glowRadius =
-          currentR *
-          (currentState === STATES.MOON_GLOWING_UP ? 3.5 : 2.2) *
-          (1 + moon.hoverAmount * 0.18);
-
-        const glowGradient = ctx.createRadialGradient(
-          moon.x, moon.y, currentR * 0.5,
-          moon.x, moon.y, glowRadius
+        const glowDiameter = currentR * 3.6;
+        ctx.globalAlpha = moon.opacity * Math.min(0.62, moon.glowOpacity + moon.hoverAmount * 0.05);
+        ctx.drawImage(
+          moonGlowSprite,
+          moon.x - glowDiameter / 2,
+          moon.y - glowDiameter / 2,
+          glowDiameter,
+          glowDiameter
         );
-        const hoverGlow = moon.hoverAmount * 0.18;
-        glowGradient.addColorStop(0, `rgba(254, 240, 138, ${moon.glowOpacity + hoverGlow})`);
-        glowGradient.addColorStop(0.5, `rgba(253, 224, 71, ${(moon.glowOpacity + hoverGlow) * 0.3})`);
-        glowGradient.addColorStop(1, 'rgba(0, 0, 0, 0)');
 
-        ctx.fillStyle = glowGradient;
-        ctx.beginPath();
-        ctx.arc(moon.x, moon.y, glowRadius, 0, Math.PI * 2);
-        ctx.fill();
-
-        const moonGradient = ctx.createRadialGradient(
-          moon.x - currentR * 0.3,
-          moon.y - currentR * 0.3,
-          currentR * 0.1,
-          moon.x,
-          moon.y,
-          currentR
-        );
-        moonGradient.addColorStop(0, '#ffffff');
-        moonGradient.addColorStop(0.75, '#fef08a');
-        moonGradient.addColorStop(1, '#fde047');
-
-        ctx.fillStyle = moonGradient;
         ctx.globalAlpha = moon.opacity;
-        ctx.beginPath();
-        ctx.arc(moon.x, moon.y, currentR, 0, Math.PI * 2);
-        ctx.fill();
+        const diameter = currentR * 2;
+        ctx.drawImage(
+          moonBodySprite,
+          moon.x - diameter / 2,
+          moon.y - diameter / 2,
+          diameter,
+          diameter
+        );
+
         ctx.restore();
       }
 
@@ -1426,16 +1464,12 @@
 
         if (currentState === STATES.WAITING_LANTERNS_CLEAR && lanterns.length === 0) {
           currentState = STATES.MOON_GLOWING_UP;
-          moon.glowOpacity = 1;
+          moon.glowOpacity = 0.34;
         }
       }
 
       // 4. Main-canvas firework highlights. The long trails stay on trailsCtx.
-      if (
-        currentState === STATES.FIREWORKS_SHOW ||
-        currentState === STATES.FIREWORKS_PAUSE ||
-        currentState === STATES.LOVE_FOREVER_BURST
-      ) {
+      if (currentState === STATES.FIREWORKS_SHOW) {
         ctx.globalCompositeOperation = 'lighter';
         ctx.lineWidth = 1.4;
         FW_COLOR_CODES.forEach(color => {
@@ -1451,26 +1485,7 @@
         ctx.globalCompositeOperation = 'source-over';
       }
 
-      // 5. Legacy LOVE FOREVER text particles, intentionally retained for the original ending.
-      for (let i = particles.length - 1; i >= 0; i--) {
-        const p = particles[i];
-        if (!p.isText) continue;
-        p.x += p.vx;
-        p.y += p.vy;
-        p.vy += p.gravity;
-        p.alpha -= p.decay;
-
-        ctx.fillStyle = p.color;
-        ctx.globalAlpha = Math.max(0, p.alpha);
-        ctx.beginPath();
-        ctx.arc(p.x, p.y, 1.8, 0, Math.PI * 2);
-        ctx.fill();
-
-        if (p.alpha <= 0) particles.splice(i, 1);
-      }
-      ctx.globalAlpha = 1;
-
-      // 6. Draw Silhouettes (Revealed after camera pan) — kept as original.
+      // 5. Draw Silhouettes (Revealed after camera pan) — kept as original.
       if (cameraOffsetY < 0) {
         ctx.save();
         const baseGroundY = height + Math.abs(targetCameraOffsetY) - 10;
