@@ -65,6 +65,16 @@
       position: relative;
       z-index: 10;
     }
+
+    #sceneFade {
+      position: fixed;
+      inset: 0;
+      background: #000;
+      opacity: 0;
+      pointer-events: none;
+      z-index: 35;
+      transition: opacity 1800ms ease-in-out;
+    }
   </style>
 </head>
 <body class="w-screen h-screen relative flex items-center justify-center">
@@ -97,6 +107,9 @@
     </div>
   </div>
 
+  <!-- FINAL SCENE FADE -->
+  <div id="sceneFade" aria-hidden="true"></div>
+
   <!-- ENDING TEXT SCREEN -->
   <div id="endingScreen" class="ui-layer fixed inset-0 flex flex-col items-center justify-center p-6 text-center pointer-events-none z-40">
     <p id="endingText1" class="text-2xl sm:text-3xl md:text-4xl font-light tracking-widest text-amber-100/90 opacity-0 my-2 font-handwriting">
@@ -117,6 +130,8 @@
     const LANTERN_LIMIT = 3;
     let lanternClicks = 0;
     let activeCardOpen = false;
+    let cardCanClose = false;
+    let cardTypingToken = 0;
 
     const GREETINGS = [
       "Gửi em bé,\nChúc em có một đêm Trung Thu thật ấm áp và tràn ngập niềm vui ✨\nDù bầu trời ngoài kia có rộng lớn thế nào, em vẫn luôn là điều đặc biệt nhất.",
@@ -135,6 +150,7 @@
       MOON_SHRINKING: 'MOON_SHRINKING',
       CAMERA_PANNING: 'CAMERA_PANNING',
       FIREWORKS_SHOW: 'FIREWORKS_SHOW',
+      FIREWORKS_DRAINING: 'FIREWORKS_DRAINING',
       ENDING_TEXT: 'ENDING_TEXT'
     };
 
@@ -163,6 +179,7 @@
     const cardFooter = document.getElementById('cardFooter');
     const endingText1 = document.getElementById('endingText1');
     const endingText2 = document.getElementById('endingText2');
+    const sceneFade = document.getElementById('sceneFade');
     const finalTypingScreen = document.getElementById('finalTypingScreen');
     const finalTypingText = document.getElementById('finalTypingText');
 
@@ -219,9 +236,9 @@
         MOON_GLOW_SIZE / 2, MOON_GLOW_SIZE / 2, 0,
         MOON_GLOW_SIZE / 2, MOON_GLOW_SIZE / 2, MOON_GLOW_SIZE / 2
       );
-      g.addColorStop(0, 'rgba(254, 240, 138, 0.32)');
-      g.addColorStop(0.20, 'rgba(254, 240, 138, 0.18)');
-      g.addColorStop(0.48, 'rgba(253, 224, 71, 0.06)');
+      g.addColorStop(0, 'rgba(254, 240, 138, 0.22)');
+      g.addColorStop(0.20, 'rgba(254, 240, 138, 0.10)');
+      g.addColorStop(0.48, 'rgba(253, 224, 71, 0.035)');
       g.addColorStop(1, 'rgba(253, 224, 71, 0)');
       gc.fillStyle = g;
       gc.fillRect(0, 0, MOON_GLOW_SIZE, MOON_GLOW_SIZE);
@@ -331,7 +348,7 @@
         // Slow cinematic expansion: gentle at the beginning and end.
         const ease = 0.5 - Math.cos(progress * Math.PI) / 2;
         moon.radius = 1.5 + (moon.targetRadius - 1.5) * ease;
-        moon.glowOpacity = ease * 0.26;
+        moon.glowOpacity = ease * 0.16;
 
         if (progress < 1) {
           requestAnimationFrame(animateAwake);
@@ -394,7 +411,9 @@
 
     // --- CARD TYPING & INTERACTION ---
     async function openGreetingCard(index) {
+      const token = ++cardTypingToken;
       activeCardOpen = true;
+      cardCanClose = false;
       cardModal.classList.remove('pointer-events-none');
       cardModal.classList.remove('opacity-0');
       cardContainer.classList.remove('scale-95');
@@ -404,40 +423,50 @@
       cardTextEl.classList.add('blinking-cursor');
 
       const text = GREETINGS[index];
-      await sleep(400);
+      await sleep(500);
 
-      for (let i = 0; i <= text.length; i++) {
-        if (!activeCardOpen) break;
-        cardTextEl.innerText = text.substring(0, i);
-        await sleep(35 + Math.random() * 20);
+      // Slower, readable typing. Punctuation naturally pauses a little longer.
+      for (let i = 0; i < text.length; i++) {
+        if (!activeCardOpen || token !== cardTypingToken) return;
+        const ch = text[i];
+        cardTextEl.innerText = text.substring(0, i + 1);
+        let delay = 72 + Math.random() * 48;
+        if (/[,.!?\n]/.test(ch)) delay += 90;
+        await sleep(delay);
       }
 
-      await sleep(600);
+      // Let the text finish, then give the reader a full second before enabling close.
+      await sleep(1000);
+      if (!activeCardOpen || token !== cardTypingToken) return;
       cardTextEl.classList.remove('blinking-cursor');
       cardFooter.classList.remove('opacity-0');
+      cardCanClose = true;
     }
 
     function closeGreetingCard() {
-      if (!activeCardOpen) return;
+      if (!activeCardOpen || !cardCanClose) return;
+      cardTypingToken++;
       activeCardOpen = false;
+      cardCanClose = false;
       cardModal.classList.add('opacity-0');
       cardModal.classList.add('pointer-events-none');
       cardContainer.classList.remove('scale-100');
       cardContainer.classList.add('scale-95');
 
-      // Increment click state cleanly
       lanternClicks++;
 
-      // If clicked 3 lanterns, progress state after card closes
       if (lanternClicks >= LANTERN_LIMIT) {
         currentState = STATES.WAITING_LANTERNS_CLEAR;
       }
     }
 
     cardModal.addEventListener('click', (e) => {
-      // Close card on clicking anywhere
-      closeGreetingCard();
+      // Only the dark area outside the card can close it, and only after typing is done.
+      if (cardCanClose && e.target === cardModal) {
+        closeGreetingCard();
+      }
     });
+    cardContainer.addEventListener('click', (e) => e.stopPropagation());
 
     // --- EVENT LISTENERS (MOUSE/TOUCH) ---
     canvas.addEventListener('mousemove', (e) => {
@@ -552,18 +581,23 @@
 
       await sleep(20000);
       clearInterval(fireworkInterval);
-      clearFireworkEngine();
 
-      // No Love Forever burst and no quiet pause: start the ending immediately.
+      // Keep simulating until the LAST star/spark/flash is genuinely gone.
+      currentState = STATES.FIREWORKS_DRAINING;
+      await waitForFireworksToFinish();
+
+      // Fade the whole scene down before the quiet ending sequence.
+      await fadeScene(0.92, 1800);
+
       currentState = STATES.ENDING_TEXT;
       await fadeElement(endingText1, 0, 1, 3000);
-      await sleep(1000);
+      await sleep(700);
       await fadeElement(endingText1, 1, 0, 3000);
-      await sleep(900);
+      await sleep(600);
       await fadeElement(endingText2, 0, 1, 3000);
-      await sleep(1000);
+      await sleep(700);
       await fadeElement(endingText2, 1, 0, 3000);
-      await sleep(1000);
+      await sleep(800);
 
       await runFinalTypewriter();
     }
@@ -584,24 +618,54 @@
       finalTypingText.innerText = '';
       finalTypingText.classList.add('blinking-cursor');
 
-      const typeInto = async (text, speed = 58) => {
+      const typeInto = async (text, base = 115) => {
         const current = finalTypingText.innerText;
-        for (let i = 1; i <= text.length; i++) {
-          finalTypingText.innerText = current + text.substring(0, i);
-          await sleep(speed + Math.random() * 26);
+        for (let i = 0; i < text.length; i++) {
+          const ch = text[i];
+          finalTypingText.innerText = current + text.substring(0, i + 1);
+          let delay = base + Math.random() * 55;
+          if (/[,.!?\n]/.test(ch)) delay += 140;
+          await sleep(delay);
         }
       };
 
-      await typeInto('Hà Nội, ngày 25 tháng 9 năm 2026');
-      await sleep(1000);
-      await typeInto('\nChúc em bé trung thu thật vui vẻ');
-      await sleep(500);
-      await typeInto('\nFrom:');
+      await typeInto('Hà Nội, ngày 25 tháng 9 năm 2026', 105);
+      await sleep(1200);
+      await typeInto('\nChúc em bé trung thu thật vui vẻ', 115);
+      await sleep(900);
+      await typeInto('\nFrom:', 125);
       await sleep(2000);
-      await typeInto(' Mot nguoi yeu');
+      await typeInto(' Mot nguoi yeu', 125);
 
       // Stop here. The final frame remains on screen.
       finalTypingText.classList.remove('blinking-cursor');
+    }
+
+    function fadeScene(targetOpacity, duration) {
+      return new Promise(resolve => {
+        sceneFade.style.transition = `opacity ${duration}ms ease-in-out`;
+        requestAnimationFrame(() => {
+          sceneFade.style.opacity = String(targetOpacity);
+        });
+        setTimeout(resolve, duration);
+      });
+    }
+
+    function fireworkParticleCount() {
+      let count = FW_BurstFlash.active.length;
+      for (const color of FW_COLOR_CODES_W_INVIS) {
+        count += FW_Star.active[color].length;
+        count += FW_Spark.active[color].length;
+      }
+      return count;
+    }
+
+    async function waitForFireworksToFinish() {
+      const deadline = performance.now() + 15000;
+      while (fireworkParticleCount() > 0 && performance.now() < deadline) {
+        await sleep(50);
+      }
+      clearFireworkEngine();
     }
 
     // --- FIREWORKS ENGINE (adapted from the supplied reference) ---
@@ -1295,7 +1359,7 @@
 
     function drawFireworkLayers() {
       // Fade the trails canvas for a photographic light-trail feel.
-      const activeFireworks = currentState === STATES.FIREWORKS_SHOW;
+      const activeFireworks = currentState === STATES.FIREWORKS_SHOW || currentState === STATES.FIREWORKS_DRAINING;
 
       if (!activeFireworks) {
         trailsCtx.clearRect(0, 0, width, height);
@@ -1368,7 +1432,7 @@
       fwLastTimestamp = timestamp;
 
       // Physics first so trails follow the exact current segment.
-      if (currentState === STATES.FIREWORKS_SHOW) {
+      if (currentState === STATES.FIREWORKS_SHOW || currentState === STATES.FIREWORKS_DRAINING) {
         updateFireworkPhysics(frameTime);
       }
 
@@ -1400,7 +1464,7 @@
         const currentR = moon.radius * (1 + moon.hoverAmount * 0.05);
 
         const glowDiameter = currentR * 3.6;
-        ctx.globalAlpha = moon.opacity * Math.min(0.62, moon.glowOpacity + moon.hoverAmount * 0.05);
+        ctx.globalAlpha = moon.opacity * Math.min(0.28, moon.glowOpacity + moon.hoverAmount * 0.04);
         ctx.drawImage(
           moonGlowSprite,
           moon.x - glowDiameter / 2,
@@ -1464,12 +1528,12 @@
 
         if (currentState === STATES.WAITING_LANTERNS_CLEAR && lanterns.length === 0) {
           currentState = STATES.MOON_GLOWING_UP;
-          moon.glowOpacity = 0.34;
+          moon.glowOpacity = 0.20;
         }
       }
 
       // 4. Main-canvas firework highlights. The long trails stay on trailsCtx.
-      if (currentState === STATES.FIREWORKS_SHOW) {
+      if (currentState === STATES.FIREWORKS_SHOW || currentState === STATES.FIREWORKS_DRAINING) {
         ctx.globalCompositeOperation = 'lighter';
         ctx.lineWidth = 1.4;
         FW_COLOR_CODES.forEach(color => {
